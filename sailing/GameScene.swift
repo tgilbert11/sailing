@@ -15,11 +15,13 @@ class GameScene: SKScene {
     
     // Game Control
     private let rotateBoatNotView = true
-    private var VT = CGVector(dx: 0, dy: 5)
+    private var VT = CGVector(dx: 0, dy: 7)
     private var XB = CGVector(dx: 0, dy: 0)
     private var delta_XB = CGVector(dx: 0, dy: 0)
     private var VB = CGVector(dx: 0, dy: 0)
     private var B: CGFloat = 0*CGFloat.pi/2
+    private var θ_bb: CGFloat = 0
+    private var delta_θ_bb: CGFloat = 0
     
     // simulation information
     private var lastSceneUpdateTime: TimeInterval = 0
@@ -48,6 +50,7 @@ class GameScene: SKScene {
     
     
     // Constants
+    private let g: CGFloat = 9.806
     private let ρ_air: CGFloat = 1.225
     private let ρ_water: CGFloat = 1000
     
@@ -63,6 +66,9 @@ class GameScene: SKScene {
     private let S_boat: CGFloat = 7
     private let CD_hull_R: CGFloat = 0.004 // 0.011
     private let CD_hull_LAT: CGFloat = 0.4
+    private let h_mainsail: CGFloat = 2.75 // height of force application on mainsail
+    private let c: CGFloat = 0.4 // depth of force application below CG
+    private let I_bb: CGFloat = 500 // NEED TO CALCULATE
     
     // Computed Properties
     private var LAT: CGFloat { get { return B + CGFloat.pi*3/2 } }
@@ -73,20 +79,25 @@ class GameScene: SKScene {
     
     private var α: CGFloat { get { return abs(VA_B.θ-s_B) } }
     private var L_mainsail: CGVector { get { return
-        VA.rotatedBy(radians: CGFloat.pi/2*(VA_B.θ > CGFloat.pi ? 1 : -1)).normalized() * 0.5 * ρ_air * VA.mag2 * A_mainsail * CL_mainsail } }
-    private var D_mainsail: CGVector { get { return VA/VA.mag * 0.5 * ρ_air * VA.mag2 * A_mainsail * CD_mainsail } }
+        VA.rotatedBy(radians: CGFloat.pi/2*(VA_B.θ > CGFloat.pi ? 1 : -1)).normalized() * 0.5 * ρ_air * VA.mag2 * A_mainsail * cos(θ_bb) * CL_mainsail } }
+    private var D_mainsail: CGVector { get { return VA/VA.mag * 0.5 * ρ_air * VA.mag2 * A_mainsail * cos(θ_bb) * CD_mainsail } }
     private var D_hull: CGVector { get { return
         B_hat * -0.5 * ρ_water * (VB⋅B_hat) * abs(VB⋅B_hat) * S_boat * CD_hull_R
         - LAT_hat * 0.5 * ρ_water * (VB⋅LAT_hat) * abs(VB⋅LAT_hat) * S_boat * CD_hull_LAT } }
     
     private var FR: CGVector { get { return B_hat*(B_hat⋅L_mainsail) + B_hat*(B_hat⋅D_mainsail) + B_hat*(B_hat⋅D_hull) } }
-    private var FLAT: CGVector { get { return LAT_hat*(LAT_hat⋅L_mainsail) + LAT_hat*(LAT_hat⋅D_mainsail) + LAT_hat*(LAT_hat⋅D_hull) } }
+    private var Fh_sail: CGVector { get { return LAT_hat*(LAT_hat⋅L_mainsail) + LAT_hat*(LAT_hat⋅D_mainsail) } }
+    private var Fh_hull: CGVector { get { return LAT_hat*(LAT_hat⋅D_hull) } }
+    private var FLAT: CGVector { get { return Fh_sail + Fh_hull } }
+    
+    private var τ_bb: CGFloat { get { return Fh_hull.mag*c + Fh_sail.mag*h_mainsail - M_boat*g*b } }
+    private var b: CGFloat { get { return 0.2*sin(2.4*θ_bb) } }
     
     
     // try to make this absolute value, rather than conditional
     private var s_B: CGFloat { get {
         if VA_B.θ < CGFloat.pi - mainSheetClosestHaul - (mainSailMaxAngle - mainSheetClosestHaul)*mainSheetPosition {
-            return CGFloat.pi - (mainSheetClosestHaul + (mainSailMaxAngle-mainSheetClosestHaul)*mainSheetPosition)
+            return CGFloat.pi - (mainSheetClosestHaul + (mainSailMaxAngle - mainSheetClosestHaul)*mainSheetPosition)
         }
         else if VA_B.θ > CGFloat.pi + mainSheetClosestHaul + (mainSailMaxAngle-mainSheetClosestHaul)*mainSheetPosition {
             return CGFloat.pi + mainSheetClosestHaul + (mainSailMaxAngle-mainSheetClosestHaul)*mainSheetPosition
@@ -135,6 +146,7 @@ class GameScene: SKScene {
     }}
     
     
+    
     // ----- ----- -----
     
     
@@ -173,6 +185,9 @@ class GameScene: SKScene {
         XB = XB + delta_XB
         VB = VB + (FR+FLAT)/M_boat*CGFloat(timeSinceLastScene)
         
+        delta_θ_bb = τ_bb / I_bb * CGFloat(timeSinceLastScene)
+        θ_bb = θ_bb + delta_θ_bb
+        
         let boatRotation = boatHeadingChangePerTillerKtSecond*tillerPosition*(VB⋅B_hat)*CGFloat(timeSinceLastScene)
         VB = VB.rotatedBy(radians: boatRotation)
         B = B + boatRotation
@@ -200,16 +215,19 @@ class GameScene: SKScene {
         debugStrings.append("  VA: \(VA)")
         debugStrings.append("VA_B: \(VA_B)")
         debugStrings.append(" s_B: \(s_B.rad2deg)")
-        debugStrings.append("s_Bb: \(s_Bb.rad2deg)")
+        //debugStrings.append("s_Bb: \(s_Bb.rad2deg)")
         debugStrings.append("   α: \(α.rad2deg)")
-        debugStrings.append("CL_m: \(CL_mainsail)")
-        debugStrings.append("CD_m: \(CD_mainsail)")
+        //debugStrings.append("CL_m: \(CL_mainsail)")
+        //debugStrings.append("CD_m: \(CD_mainsail)")
         debugStrings.append(" L_m: \(L_mainsail)")
         debugStrings.append(" D_m: \(D_mainsail)")
         debugStrings.append("tack: \(VA_B.θ > CGFloat.pi ? "port" : "starboard")")
         debugStrings.append(" D_h: \(D_hull)")
         debugStrings.append("  FR: \(FR)")
         debugStrings.append("FLAT: \(FLAT)")
+        debugStrings.append("τ_bb: \(τ_bb)")
+        debugStrings.append("   b: \(b)")
+        debugStrings.append("θ_bb: \(θ_bb.rad2deg)")
     }
     
     // UI updates
