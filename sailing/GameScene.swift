@@ -9,25 +9,36 @@
 import SpriteKit
 import GameplayKit
 
-infix operator ⋅
+infix operator ⋅ : MultiplicationPrecedence
+infix operator ⊙ : MultiplicationPrecedence
 
 class GameScene: SKScene {
     
+    // world = ŵ
+    // boat = B̂
+    //    lat = l̂
+    // V_Aŵ = â
+    // sail = ŝ
+    
+    // sail forces act in â
+    // hull forces act in b̂ (boat right/lat is l̂)
+    // position and velocity are in ŵ
+    
     // Game Control
     private let rotateBoatNotView = true
-    private var VT = CGVector(dx: 0, dy: 7)
-    private var XB = CGVector(dx: 0, dy: 0)
-    private var delta_XB = CGVector(dx: 0, dy: 0)
-    private var VB = CGVector(dx: 0, dy: 0)
-    private var B: CGFloat = 0*CGFloat.pi/2
-    private var θ_bb: CGFloat = 0
-    private var delta_θ_bb: CGFloat = 0
+    private var v_Tŵ = CGVector(dx: 0, dy: 6) // m/s
+    private var x_Bŵ = CGVector(dx: 0, dy: 0) // m
+    private var Δx_Bŵ = CGVector(dx: 0, dy: 0) // Δm/s
+    private var v_Bŵ = CGVector(dx: 0, dy: 0) // m/s
+    private var θ_Bŵ: CGFloat = -0.5*CGFloat.pi/2*0 // radians
+    private var θ_bbŵ: CGFloat = 0 // radians
+    private var Δθ_bbŵ: CGFloat = 0 // Δradians
     
     // simulation information
-    private var lastSceneUpdateTime: TimeInterval = 0
+    private var lastSceneUpdateTime: TimeInterval = 0 // s
     private var firstUpdate = true
-    private var pixelsPerMeter: CGFloat = 1080/30
-    private var bgOverlap: CGFloat = 5
+    private var pixelsPerMeter: CGFloat = 1080/30 // pixels/m
+    private var bgOverlap: CGFloat = 5 // pixels
     
     // Debugging
     private var debugStrings = [String]()
@@ -41,83 +52,96 @@ class GameScene: SKScene {
     private var leewardLabel : SKLabelNode?
     private var frLabel : SKLabelNode?
     private var frlLabel : SKLabelNode?
+    private var aaLabel : SKLabelNode?
     private var heelLabel : SKLabelNode?
+    private var fhLabel : SKLabelNode?
+    private var lLabel : SKLabelNode?
+    private var dLabel : SKLabelNode?
+    private var sternNode : SKSpriteNode?
+    private var topSailNode : SKSpriteNode?
+    private var topForcesNode : SKSpriteNode?
     
     
     // User input trackers
-    private var tillerPosition: CGFloat = 0 // [-1,1]
-    private var mainSheetPosition: CGFloat = 0 // [0,1]
+    private var tillerPosition: CGFloat = 0 // [], [-1,1]
+    private var mainSheetPosition: CGFloat = 0 // [], [0,1]
     
     
     // Constants
-    private let g: CGFloat = 9.806
-    private let ρ_air: CGFloat = 1.225
-    private let ρ_water: CGFloat = 1000
+    private let g: CGFloat = 9.806 // m/s2
+    private let ρ_air: CGFloat = 1.225 // kg/m3
+    private let ρ_water: CGFloat = 1000 // kg/m3
     
-    private let tillerMax: CGFloat = 300
+    private let tillerMax: CGFloat = 300 // pixels
     
-    private let mainSheetClosestHaul: CGFloat = 0.25
-    private let mainSheetMax: CGFloat = 400
-    private let mainSailMaxAngle: CGFloat = 1.22
+    private let mainSheetClosestHaul: CGFloat = 0.25 // radians
+    private let mainSheetMax: CGFloat = 400 // pixels
+    private let mainSailMaxAngle: CGFloat = 1.22 // radians
     
-    private let boatHeadingChangePerTillerKtSecond: CGFloat = 0.25
-    private let A_mainsail: CGFloat = 6.81
-    private let M_boat: CGFloat = 250
-    private let S_boat: CGFloat = 7
-    private let CD_hull_R: CGFloat = 0.004 // 0.011
-    private let CD_hull_LAT: CGFloat = 0.4
-    private let h_mainsail: CGFloat = 2.75 // height of force application on mainsail
-    private let c: CGFloat = 0.4 // depth of force application below CG
-    private let I_bb: CGFloat = 500 // NEED TO CALCULATE
+    private let boatHeadingChangePerTillerKtSecond: CGFloat = 0.25 // radians/([]*m/s*s)
+    private let A_mainsail: CGFloat = 6.81 // m2
+    private let M_boat: CGFloat = 250 // kg
+    private let S_boat: CGFloat = 7 // m2
+    private let CD_hull_R: CGFloat = 0.005 // [], 0.011 by lookup
+    private let CD_hull_LAT: CGFloat = 0.4 // []
+    private let h_mainsail: CGFloat = 2.75 // m, height of force application on mainsail
+    private let c: CGFloat = 0.4 // m, depth of force application below CG
+    private let I_bb: CGFloat = 500 // kg*m2, NEED TO REFINE
     
     // Computed Properties
-    private var LAT: CGFloat { get { return B + CGFloat.pi*3/2 } }
-    private var B_hat: CGVector { get { return CGVector.init(normalWithAngle: B) } }
-    private var LAT_hat: CGVector { get { return CGVector.init(normalWithAngle: LAT) } }
-    private var VA: CGVector { get { return VT - VB } }
-    private var VA_B: CGVector { get { return VA.rotatedBy(radians: -B) } }
+    private var θ_lB̂: CGFloat { get { return CGFloat.pi/2 + (V_AB̂.θ < CGFloat.pi ? CGFloat.pi : 0) } }
+    private var θ_lŵ: CGFloat { get { return θ_lB̂ + θ_Bŵ } } // radians
+    private var B̂: CGVector { get { return CGVector.init(normalWithAngle: θ_Bŵ) } } // []
+    private var l̂: CGVector { get { return CGVector.init(normalWithAngle: θ_lŵ) } } // []
+    private var V_Aŵ: CGVector { get { return v_Tŵ - v_Bŵ } } // m/s
+    private var V_AB̂: CGVector { get { return V_Aŵ.rotatedBy(radians: -θ_Bŵ) } } // m/s
     
-    private var α: CGFloat { get { return abs(VA_B.θ-s_B) } }
-    private var L_mainsail: CGVector { get { return
-        VA.rotatedBy(radians: CGFloat.pi/2*(VA_B.θ > CGFloat.pi ? 1 : -1)).normalized() * 0.5 * ρ_air * VA.mag2 * A_mainsail * cos(θ_bb) * CL_mainsail } }
-    private var D_mainsail: CGVector { get { return VA/VA.mag * 0.5 * ρ_air * VA.mag2 * A_mainsail * cos(θ_bb) * CD_mainsail } }
-    private var D_hull: CGVector { get { return
-        B_hat * -0.5 * ρ_water * (VB⋅B_hat) * abs(VB⋅B_hat) * S_boat * CD_hull_R
-        - LAT_hat * 0.5 * ρ_water * (VB⋅LAT_hat) * abs(VB⋅LAT_hat) * S_boat * CD_hull_LAT } }
+    private var α: CGFloat { get { return abs(V_AB̂.θ-θ_sB̂) } } // radians
+    private var L_mainsailŵ: CGVector { get { return V_Aŵ.rotatedBy(radians: θ_lB̂).normalized() * 0.5 * ρ_air * V_Aŵ.mag2 * A_mainsail * cos(θ_bbŵ) * CL_mainsail } } // N
+    private var D_mainsailŵ: CGVector { get { return V_Aŵ/V_Aŵ.mag * 0.5 * ρ_air * V_Aŵ.mag2 * A_mainsail * cos(θ_bbŵ) * CD_mainsail } } // N
+    private var D_hullŵ: CGVector { get { return
+        B̂ * -0.5 * ρ_water * (v_Bŵ⋅B̂) * abs(v_Bŵ⋅B̂) * S_boat * CD_hull_R
+        - l̂ * 0.5 * ρ_water * (v_Bŵ⋅l̂) * abs(v_Bŵ⋅l̂) * S_boat * cos(θ_bbŵ) * CD_hull_LAT } } // N
     
-    private var FR: CGVector { get { return B_hat*(B_hat⋅L_mainsail) + B_hat*(B_hat⋅D_mainsail) + B_hat*(B_hat⋅D_hull) } }
-    private var Fh_sail: CGVector { get { return LAT_hat*(LAT_hat⋅L_mainsail) + LAT_hat*(LAT_hat⋅D_mainsail) } }
-    private var Fh_hull: CGVector { get { return LAT_hat*(LAT_hat⋅D_hull) } }
-    private var FLAT: CGVector { get { return Fh_sail + Fh_hull } }
+    private var FR: CGVector { get { return L_mainsailŵ⊙B̂ + D_mainsailŵ⊙B̂ + D_hullŵ⊙B̂ } } // N
+    private var Fh_sail: CGVector { get { return L_mainsailŵ⊙l̂ + D_mainsailŵ⊙l̂ } } // N
+    private var Fh_hull: CGVector { get { return D_hullŵ⊙l̂ } } // N
+    private var FLAT: CGVector { get { return Fh_sail + Fh_hull } } // N
+    private var F: CGVector { get { return FR + FLAT } }
     
-    private var τ_bb: CGFloat { get { return Fh_hull.mag*c + Fh_sail.mag*h_mainsail - M_boat*g*b } }
-    private var b: CGFloat { get { return 0.2*sin(2.4*θ_bb) } }
+    private var τ_bb: CGFloat { get { return Fh_hull.mag*c + Fh_sail.mag*h_mainsail - M_boat*g*b } } // Nm
+    private var b: CGFloat { get { return 0.4*sin(2.4*θ_bbŵ) } } // m
     
     
     // try to make this absolute value, rather than conditional
-    private var s_B: CGFloat { get {
-        if VA_B.θ < CGFloat.pi - mainSheetClosestHaul - (mainSailMaxAngle - mainSheetClosestHaul)*mainSheetPosition {
+    private var θ_sB̂: CGFloat { get {
+        if V_AB̂.θ < CGFloat.pi - mainSheetClosestHaul - (mainSailMaxAngle - mainSheetClosestHaul)*mainSheetPosition {
             return CGFloat.pi - (mainSheetClosestHaul + (mainSailMaxAngle - mainSheetClosestHaul)*mainSheetPosition)
         }
-        else if VA_B.θ > CGFloat.pi + mainSheetClosestHaul + (mainSailMaxAngle-mainSheetClosestHaul)*mainSheetPosition {
+        else if V_AB̂.θ > CGFloat.pi + mainSheetClosestHaul + (mainSailMaxAngle-mainSheetClosestHaul)*mainSheetPosition {
             return CGFloat.pi + mainSheetClosestHaul + (mainSailMaxAngle-mainSheetClosestHaul)*mainSheetPosition
         }
         else {
-            return VA_B.θ
+            return V_AB̂.θ
         }
     }}
     
-    private var s_Bb: CGFloat { get {
-        if VA_B.θ < CGFloat.pi - mainSheetClosestHaul - (mainSailMaxAngle - mainSheetClosestHaul)*mainSheetPosition {
-            return CGFloat.pi - (mainSheetClosestHaul + (mainSailMaxAngle-mainSheetClosestHaul)*mainSheetPosition)
-        }
-        else if VA_B.θ > CGFloat.pi + mainSheetClosestHaul + (mainSailMaxAngle-mainSheetClosestHaul)*mainSheetPosition {
-            return CGFloat.pi + mainSheetClosestHaul + (mainSailMaxAngle-mainSheetClosestHaul)*mainSheetPosition
-        }
-        else {
-            return VA_B.θ
-        }
-    }}
+//    private var CL_mainsail: CGFloat { get {
+//        switch α {
+//        case 0 ..< CGFloat(10).deg2rad:
+//            return 0
+//        case CGFloat(10).deg2rad ..< CGFloat(20).deg2rad:
+//            return 0 + 1.2*(α-CGFloat(10).deg2rad)/CGFloat(10).deg2rad
+//        case CGFloat(20).deg2rad ..< CGFloat(30).deg2rad:
+//            return 1.2 + 0.4*(α-CGFloat(20).deg2rad)/CGFloat(10).deg2rad
+//        case CGFloat(30).deg2rad ..< CGFloat(50).deg2rad:
+//            return 1.6 - 0.2*(α-CGFloat(30).deg2rad)/CGFloat(20).deg2rad
+//        case CGFloat(50).deg2rad ..< CGFloat(100).deg2rad:
+//            return 1.4 - 1.4*(α-CGFloat(50).deg2rad)/CGFloat(50).deg2rad
+//        default:
+//            return 0
+//        }
+//        }}
     
     private var CL_mainsail: CGFloat { get {
         switch α {
@@ -128,20 +152,20 @@ class GameScene: SKScene {
         case CGFloat(20).deg2rad ..< CGFloat(30).deg2rad:
             return 1.2 + 0.4*(α-CGFloat(20).deg2rad)/CGFloat(10).deg2rad
         case CGFloat(30).deg2rad ..< CGFloat(50).deg2rad:
-            return 1.6 - 0.2*(α-CGFloat(30).deg2rad)/CGFloat(20).deg2rad
+            return 1.6 - 1.2*(α-CGFloat(30).deg2rad)/CGFloat(20).deg2rad
         case CGFloat(50).deg2rad ..< CGFloat(100).deg2rad:
-            return 1.4 - 1.4*(α-CGFloat(50).deg2rad)/CGFloat(50).deg2rad
+            return 0.4 - 0.4*(α-CGFloat(50).deg2rad)/CGFloat(50).deg2rad
         default:
             return 0
         }
-    }}
+        }}
     
     private var CD_mainsail: CGFloat { get {
-        if α > CGFloat(100).deg2rad {
+        if α > CGFloat(50).deg2rad {
             return 1.6
         }
         else {
-            return 0.2 + 1.4*pow(α/CGFloat(100).deg2rad,2)
+            return 0.2 + 1.4*pow(α/CGFloat(50).deg2rad,2)
         }
     }}
     
@@ -161,7 +185,14 @@ class GameScene: SKScene {
         self.leewardLabel = self.childNode(withName: "//leewardLabel") as? SKLabelNode
         self.frLabel = self.childNode(withName: "//frLabel") as? SKLabelNode
         self.frlLabel = self.childNode(withName: "//frlLabel") as? SKLabelNode
+        self.aaLabel = self.childNode(withName: "//aaLabel") as? SKLabelNode
         self.heelLabel = self.childNode(withName: "//heelLabel") as? SKLabelNode
+        self.fhLabel = self.childNode(withName: "//fhLabel") as? SKLabelNode
+        self.lLabel = self.childNode(withName: "//lLabel") as? SKLabelNode
+        self.dLabel = self.childNode(withName: "//dLabel") as? SKLabelNode
+        self.sternNode = self.childNode(withName: "//sternNode") as? SKSpriteNode
+        self.topSailNode = self.childNode(withName: "//topSail") as? SKSpriteNode
+        self.topForcesNode = self.childNode(withName: "//topForces") as? SKSpriteNode
         
         createWater()
     }
@@ -181,20 +212,21 @@ class GameScene: SKScene {
         
         printCalculations()
         
-        delta_XB = VB * CGFloat(timeSinceLastScene)
-        XB = XB + delta_XB
-        VB = VB + (FR+FLAT)/M_boat*CGFloat(timeSinceLastScene)
+        Δx_Bŵ = v_Bŵ * CGFloat(timeSinceLastScene)
+        x_Bŵ = x_Bŵ + Δx_Bŵ
+        v_Bŵ = v_Bŵ + (FR+FLAT)/M_boat*CGFloat(timeSinceLastScene)
+            
+        Δθ_bbŵ = τ_bb / I_bb * CGFloat(timeSinceLastScene)
+        θ_bbŵ = θ_bbŵ + Δθ_bbŵ
+        if θ_bbŵ > CGFloat.pi/2 { θ_bbŵ = 0 }
         
-        delta_θ_bb = τ_bb / I_bb * CGFloat(timeSinceLastScene)
-        θ_bb = θ_bb + delta_θ_bb
-        
-        let boatRotation = boatHeadingChangePerTillerKtSecond*tillerPosition*(VB⋅B_hat)*CGFloat(timeSinceLastScene)
-        VB = VB.rotatedBy(radians: boatRotation)
-        B = B + boatRotation
+        let boatRotation = boatHeadingChangePerTillerKtSecond*tillerPosition*(v_Bŵ⋅B̂)*CGFloat(timeSinceLastScene)
+        v_Bŵ = v_Bŵ.rotatedBy(radians: boatRotation)
+        θ_Bŵ = θ_Bŵ + boatRotation
         
         
-        debugStrings.append("   B:  \(B.rad2deg)")
-        debugStrings.append("  VB: \(VB)")
+        debugStrings.append(" θ_Bŵ:  \(θ_Bŵ.rad2deg)")
+        debugStrings.append(" v_Bŵ: \(v_Bŵ)")
         
         updateGraphics()
         
@@ -208,38 +240,46 @@ class GameScene: SKScene {
     
     // Printing
     func printCalculations() {
-        debugStrings.append("  VT: \(VT)")
-        debugStrings.append("  XB: (\(XB.dx), \(XB.dy))")
-        debugStrings.append("   B: \(B.rad2deg)")
-        debugStrings.append("  VB: \(VB)")
-        debugStrings.append("  VA: \(VA)")
-        debugStrings.append("VA_B: \(VA_B)")
-        debugStrings.append(" s_B: \(s_B.rad2deg)")
-        //debugStrings.append("s_Bb: \(s_Bb.rad2deg)")
-        debugStrings.append("   α: \(α.rad2deg)")
-        //debugStrings.append("CL_m: \(CL_mainsail)")
-        //debugStrings.append("CD_m: \(CD_mainsail)")
-        debugStrings.append(" L_m: \(L_mainsail)")
-        debugStrings.append(" D_m: \(D_mainsail)")
-        debugStrings.append("tack: \(VA_B.θ > CGFloat.pi ? "port" : "starboard")")
-        debugStrings.append(" D_h: \(D_hull)")
-        debugStrings.append("  FR: \(FR)")
-        debugStrings.append("FLAT: \(FLAT)")
-        debugStrings.append("τ_bb: \(τ_bb)")
-        debugStrings.append("   b: \(b)")
-        debugStrings.append("θ_bb: \(θ_bb.rad2deg)")
+        debugStrings.append(" v_Tŵ: \(v_Tŵ)")
+        debugStrings.append(" x_Bŵ: (\(x_Bŵ.dx), \(x_Bŵ.dy))")
+        debugStrings.append(" θ_Bŵ: \(θ_Bŵ.rad2deg)")
+        debugStrings.append(" v_Bŵ: \(v_Bŵ)")
+        debugStrings.append(" V_Aŵ: \(V_Aŵ)")
+        debugStrings.append(" V_AB̂: \(V_AB̂)")
+        debugStrings.append(" θ_sB̂: \(θ_sB̂.rad2deg)")
+        debugStrings.append("    B̂: \(B̂)")
+        debugStrings.append("    l̂: \(l̂)")
+        debugStrings.append("    α: \(α.rad2deg)")
+        debugStrings.append(" CL_m: \(CL_mainsail)")
+        debugStrings.append(" CD_m: \(CD_mainsail)")
+        debugStrings.append("  L_m: \(L_mainsailŵ)")
+        debugStrings.append("  D_m: \(D_mainsailŵ)")
+        debugStrings.append(" tack: \(V_AB̂.θ > CGFloat.pi ? "port" : "starboard")")
+        debugStrings.append("  D_h: \(D_hullŵ)")
+        debugStrings.append("   FR: \(FR)")
+        debugStrings.append(" FLAT: \(FLAT)")
+        debugStrings.append("    F: \(F)")
+        debugStrings.append(" Fh_s: \(Fh_sail)")
+        debugStrings.append(" Fh_h: \(Fh_hull)")
+        debugStrings.append(" τ_bb: \(τ_bb)")
+        debugStrings.append("    b: \(b)")
+        debugStrings.append("θ_bbŵ: \(θ_bbŵ.rad2deg)")
     }
     
     // UI updates
     func updateGraphics() {
         if rotateBoatNotView {
-            self.windLabel?.zRotation = VT.θ
-            self.boatLabel?.zRotation = B
+            self.windLabel?.zRotation = v_Tŵ.θ
+            self.boatLabel?.zRotation = θ_Bŵ
         }
         else {
-            self.windLabel?.zRotation = -B+VT.θ+CGFloat.pi/2
+            self.windLabel?.zRotation = -θ_Bŵ+v_Tŵ.θ+CGFloat.pi/2
             self.boatLabel?.zRotation = CGFloat.pi/2
         }
+        
+        self.sternNode?.zRotation = -θ_bbŵ
+        self.topSailNode?.zRotation = θ_sB̂+CGFloat.pi
+        self.topForcesNode?.zRotation = V_AB̂.θ+CGFloat.pi
         
         let nf: NumberFormatter = {
             let temporaryFormatter = NumberFormatter()
@@ -250,23 +290,29 @@ class GameScene: SKScene {
             return temporaryFormatter
         }()
         
-        self.sailLabel?.zRotation = s_B
-        self.wobLabel?.zRotation = VA_B.θ
-        self.speedLabel?.text = "\(nf.string(from: NSNumber.init(value: Double(VB⋅B_hat)*1.943))!) kts"
-        self.leewardLabel?.text = "\(nf.string(from: NSNumber.init(value: Double((VB⋅VT)/VT.mag)*1.943))!) kts"
-        self.frLabel?.text = "FR: \(nf.string(from: NSNumber.init(value: Double(FR⋅B_hat)))!)"
-        self.frlLabel?.text = "FRL: \(nf.string(from: NSNumber.init(value: Double((FR⋅VT)/VT.mag)))!)"
-        self.heelLabel?.text = "α: \(nf.string(from: NSNumber.init(value: Double(α.rad2deg)))!)"
-        //self.water?.position.x -= delta_XB.dx*pixelsPerMeter
-        //self.water?.position.y -= delta_XB.dy*pixelsPerMeter
+        
+        
+        self.sailLabel?.zRotation = θ_sB̂
+        self.wobLabel?.zRotation = V_AB̂.θ
+        self.speedLabel?.text = "\(nf.string(from: NSNumber.init(value: Double(v_Bŵ⋅B̂)*1.943))!) kts"
+        self.leewardLabel?.text = "\(nf.string(from: NSNumber.init(value: Double((v_Bŵ⋅v_Tŵ)/v_Tŵ.mag)*1.943))!) kts"
+        self.frLabel?.text = "FR: \(nf.string(from: NSNumber.init(value: Double(FR⋅B̂)))!)"
+        self.frlLabel?.text = "F.θ: \(nf.string(from: NSNumber.init(value: Double(F.θ.rad2deg)))!)"
+        self.aaLabel?.text = "α: \(nf.string(from: NSNumber.init(value: Double(α.rad2deg)))!)"
+        self.heelLabel?.text = "θ_bbŵ: \(nf.string(from: NSNumber.init(value: Double(θ_bbŵ.rad2deg)))!)"
+        self.fhLabel?.text = "\(nf.string(from: NSNumber.init(value: Double(Fh_sail.mag)))!)"
+        self.lLabel?.text = "\(nf.string(from: NSNumber.init(value: Double(L_mainsailŵ.mag)))!)"
+        self.dLabel?.text = "\(nf.string(from: NSNumber.init(value: Double(D_mainsailŵ.mag)))!)"
+        //self.water?.position.x -= Δx_Bŵ.dx*pixelsPerMeter
+        //self.water?.position.y -= Δx_Bŵ.dy*pixelsPerMeter
         updateWater()
     }
     
     func updateWater() {
         self.enumerateChildNodes(withName: "water", using: ({
             (node, error) in
-            node.position.x -= self.delta_XB.dx*self.pixelsPerMeter
-            node.position.y -= self.delta_XB.dy*self.pixelsPerMeter
+            node.position.x -= self.Δx_Bŵ.dx*self.pixelsPerMeter
+            node.position.y -= self.Δx_Bŵ.dy*self.pixelsPerMeter
             
             if node.position.x < -(self.scene?.size.width)!*2.5 { node.position.x += (self.scene?.size.width)!*5 }
             else if node.position.x > (self.scene?.size.width)!*1.5 { node.position.x -= (self.scene?.size.width)!*5 }
@@ -295,7 +341,7 @@ class GameScene: SKScene {
     
     func touchMoved(toPoint pos : CGPoint) {
         if pos.y < -640 { tillerUpdated(toValue: pos.x) }
-        if pos.x < -270 { sheetUpdated(toValue: pos.y) }
+        if pos.x < -270 && pos.y > -mainSheetMax { sheetUpdated(toValue: pos.y) }
    }
     
     func touchUp(atPoint pos : CGPoint) {
@@ -393,6 +439,9 @@ extension CGVector: CustomStringConvertible {
     }
     static func ⋅ (left: CGVector, right: CGVector) -> CGFloat {
         return left.dx * right.dx + left.dy * right.dy
+    }
+    static func ⊙ (left: CGVector, right: CGVector) -> CGVector {
+        return right.normalized()*(left⋅right)
     }
     
 }
