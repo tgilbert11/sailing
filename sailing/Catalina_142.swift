@@ -29,20 +29,17 @@ class Catalina_142: Boat {
     private var tillerPosition: CGFloat
     private var lastSceneUpdateTime: TimeInterval?
     private var v_Tŵ = CGVector.zero
+    private let pixelsPerMeter: CGFloat
+    
+    private let beam: CGFloat = 1.88 // m
+    private let loa: CGFloat = 4.32 // m
+    private let bowToMast: CGFloat = 1.52 // m
+    private let boomLength: CGFloat = 2.59 // m
     
     // Game Control
-    public var x_Bŵ = CGVector(dx: 0, dy: 0) // m
-    public var Δx_Bŵ = CGVector(dx: 0, dy: 0) // Δm/s, SHOULD BE PRIVATE
-    public var v_Bŵ = CGVector(dx: 0, dy: 0) // m/s
-    public var θ_Bŵ: CGFloat = -0.5*CGFloat.pi/2*0 // radians
-    public var θ_bbŵ: CGFloat = 0 // radians
-    private var Δθ_bbŵ: CGFloat = 0 // Δradians
     
     
     // Constants
-    private let g: CGFloat = 9.806 // m/s2
-    private let ρ_air: CGFloat = 1.225 // kg/m3
-    private let ρ_water: CGFloat = 1000 // kg/m3
     
     public let tillerMax: CGFloat = 300 // pixels, SHOULD BE PRIVATE
     
@@ -127,9 +124,15 @@ class Catalina_142: Boat {
     
     // ----- ----- -----
     
-    override init() {
+    init(pixelsPerMeter: CGFloat) {
         self.mainSheetPosition = 0
         self.tillerPosition = 0
+        self.pixelsPerMeter = pixelsPerMeter
+        super.init(texture: SKTexture(imageNamed: "top boat"), color: .black, size: CGSize(width: beam*self.pixelsPerMeter, height: loa*pixelsPerMeter))
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
     }
     
     // Frame Updates
@@ -154,6 +157,7 @@ class Catalina_142: Boat {
         let boatRotation = boatHeadingChangePerTillerKtSecond*tillerPosition*(v_Bŵ⋅B̂)*CGFloat(timeSinceLastScene)
         v_Bŵ = v_Bŵ.rotatedBy(radians: boatRotation)
         θ_Bŵ = θ_Bŵ + boatRotation
+        
         
         
     }

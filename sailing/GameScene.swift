@@ -28,11 +28,11 @@ class GameScene: SKScene {
     private let rotateBoatNotView = true
     private let boat = Catalina_142.init()
     private var v_Tŵ = CGVector(dx: 0, dy: 6) // m/s
+    private var pixelsPerMeter: CGFloat = 41 // pixels/m
     
     // simulation information
     private var lastSceneUpdateTime: TimeInterval = 0 // s
     private var firstUpdate = true
-    private var pixelsPerMeter: CGFloat = 1080/30*10 // pixels/m
     private var bgOverlap: CGFloat = 5 // pixels
     
     // Debugging
@@ -85,7 +85,12 @@ class GameScene: SKScene {
         self.topSailNode = self.childNode(withName: "//topSail") as? SKSpriteNode
         self.topForcesNode = self.childNode(withName: "//topForces") as? SKSpriteNode
         
+        boat.position = CGPoint(x: 75, y: 0)
+        
+        self.addChild(boat)
         createWater()
+        
+        let b = boat.ρ_air
         
     }
     
