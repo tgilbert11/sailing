@@ -42,6 +42,7 @@ class Catalina_142: Boat {
     
     // Child SKNodes
     private var mainsail: SKSpriteNode?
+    private var mastTellTail: SKSpriteNode?
     
     // Constants
     
@@ -135,14 +136,22 @@ class Catalina_142: Boat {
         self.tillerPosition = 0
         self.pixelsPerMeter = pixelsPerMeter
         
-        self.mainsail = SKSpriteNode(imageNamed: "sail gray")
+        self.mainsail = SKSpriteNode(imageNamed: "sail top boom")
+        self.mastTellTail = SKSpriteNode(imageNamed: "mast tell tail")
         
         super.init(texture: SKTexture(imageNamed: "boat flat transom"), color: .black, size: CGSize(width: beam*self.pixelsPerMeter, height: loa*pixelsPerMeter))
         
-        mainsail?.size = CGSize(width: boomLength*self.pixelsPerMeter/mainsailAspectRatio, height: boomLength*self.pixelsPerMeter)
+        self.mainsail?.size = CGSize(width: boomLength*self.pixelsPerMeter/mainsailAspectRatio, height: boomLength*self.pixelsPerMeter)
         self.mainsail?.anchorPoint = CGPoint(x: 0.5, y: 1-1/mainsailAspectRatio/2)
         self.mainsail?.position = CGPoint(x: 0, y: self.pixelsPerMeter*(0.5*self.loa - self.bowToMast))
+        self.mainsail?.zPosition = 1
         self.addChild(self.mainsail!)
+        
+        self.mastTellTail?.size = CGSize(width: 0.15*pixelsPerMeter, height: 1.5*pixelsPerMeter)
+        self.mastTellTail?.anchorPoint = CGPoint(x: 0.5, y: 0.95)
+        self.mastTellTail?.position = self.mainsail!.position
+        self.mastTellTail?.zPosition = 2
+        self.addChild(self.mastTellTail!)
         
         
     }
@@ -174,7 +183,8 @@ class Catalina_142: Boat {
         v_Bŵ = v_Bŵ.rotatedBy(radians: boatRotation)
         θ_Bŵ = θ_Bŵ + boatRotation
         
-        
+        self.mainsail?.zRotation = self.θ_sB̂ + CGFloat.pi // NEED TO MAKE ABSOLUTELY CORRECT
+        self.mastTellTail?.zRotation = self.V_AB̂.θ + CGFloat.pi // NEED TO MAKE ABSOLUTELY CORRECT
         
     }
     

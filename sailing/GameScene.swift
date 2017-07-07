@@ -26,7 +26,6 @@ class GameScene: SKScene {
     
     // Game Control
     private let rotateBoatNotView = true
-//    private let pixelsPerMeter: CGFloat = 41 // pixels/m
     private let boat = Catalina_142.init(pixelsPerMeter: GameViewController.pixelsPerMeter)
     private var v_Tŵ = CGVector(dx: 0, dy: 6) // m/s
     
@@ -39,10 +38,7 @@ class GameScene: SKScene {
     private var debugStrings = [String]()
     
     // SKNodes
-    private var boatLabel : SKLabelNode?
-    private var sailLabel : SKLabelNode?
     private var windLabel : SKLabelNode?
-    private var wobLabel : SKLabelNode?
     private var speedLabel : SKLabelNode?
     private var leewardLabel : SKLabelNode?
     private var frLabel : SKLabelNode?
@@ -68,10 +64,7 @@ class GameScene: SKScene {
     // Initialization
     override func didMove(to view: SKView) {
         
-        self.boatLabel = self.childNode(withName: "//boatLabel") as? SKLabelNode
-        self.sailLabel = self.childNode(withName: "//sailLabel") as? SKLabelNode
         self.windLabel = self.childNode(withName: "//windLabel") as? SKLabelNode
-        self.wobLabel = self.childNode(withName: "//wobLabel") as? SKLabelNode
         self.speedLabel = self.childNode(withName: "//speedLabel") as? SKLabelNode
         self.leewardLabel = self.childNode(withName: "//leewardLabel") as? SKLabelNode
         self.frLabel = self.childNode(withName: "//frLabel") as? SKLabelNode
@@ -118,11 +111,11 @@ class GameScene: SKScene {
     func updateGraphics() {
         if rotateBoatNotView {
             self.windLabel?.zRotation = v_Tŵ.θ
-            self.boatLabel?.zRotation = self.boat.θ_Bŵ
+            self.boat.zRotation = self.boat.θ_Bŵ - CGFloat.pi/2 // NEED TO MAKE ABSOLUTELY CORRECT
         }
         else {
             self.windLabel?.zRotation = -self.boat.θ_Bŵ+v_Tŵ.θ+CGFloat.pi/2
-            self.boatLabel?.zRotation = CGFloat.pi/2
+            self.boat.zRotation = 0
         }
         
         self.sternNode?.zRotation = -self.boat.θ_bbŵ
@@ -140,8 +133,6 @@ class GameScene: SKScene {
         
         
         
-        self.sailLabel?.zRotation = self.boat.θ_sB̂
-        self.wobLabel?.zRotation = self.boat.V_AB̂.θ
         self.speedLabel?.text = "\(nf.string(from: NSNumber.init(value: Double(self.boat.v_Bŵ.mag)*1.943))!) kts"
         self.leewardLabel?.text = "\(nf.string(from: NSNumber.init(value: Double((self.boat.v_Bŵ⋅v_Tŵ)/v_Tŵ.mag)*1.943))!) kts"
         self.frLabel?.text = "FR: \(nf.string(from: NSNumber.init(value: Double(self.boat.FR⋅self.boat.B̂)))!)"
@@ -151,8 +142,6 @@ class GameScene: SKScene {
         self.fhLabel?.text = "\(nf.string(from: NSNumber.init(value: Double(self.boat.Fh_sail.mag)))!)"
         self.lLabel?.text = "\(nf.string(from: NSNumber.init(value: Double(self.boat.L_mainsailŵ.mag)))!)"
         self.dLabel?.text = "\(nf.string(from: NSNumber.init(value: Double(self.boat.D_mainsailŵ.mag)))!)"
-        //self.water?.position.x -= Δx_Bŵ.dx*pixelsPerMeter
-        //self.water?.position.y -= Δx_Bŵ.dy*pixelsPerMeter
         updateWater()
     }
     
