@@ -30,6 +30,7 @@ class Catalina_142: Boat {
     private var lastSceneUpdateTime: TimeInterval?
     private var v_Tŵ = CGVector.zero
     private let pixelsPerMeter: CGFloat
+    private let mainsailAspectRatio: CGFloat = 13.5
     
     private let beam: CGFloat = 1.88 // m
     private let loa: CGFloat = 4.32 // m
@@ -38,6 +39,9 @@ class Catalina_142: Boat {
     
     // Game Control
     
+    
+    // Child SKNodes
+    private var mainsail: SKSpriteNode?
     
     // Constants
     
@@ -125,10 +129,22 @@ class Catalina_142: Boat {
     // ----- ----- -----
     
     init(pixelsPerMeter: CGFloat) {
+        
+        
         self.mainSheetPosition = 0
         self.tillerPosition = 0
         self.pixelsPerMeter = pixelsPerMeter
-        super.init(texture: SKTexture(imageNamed: "top boat"), color: .black, size: CGSize(width: beam*self.pixelsPerMeter, height: loa*pixelsPerMeter))
+        
+        self.mainsail = SKSpriteNode(imageNamed: "sail gray")
+        
+        super.init(texture: SKTexture(imageNamed: "boat flat transom"), color: .black, size: CGSize(width: beam*self.pixelsPerMeter, height: loa*pixelsPerMeter))
+        
+        mainsail?.size = CGSize(width: boomLength*self.pixelsPerMeter/mainsailAspectRatio, height: boomLength*self.pixelsPerMeter)
+        self.mainsail?.anchorPoint = CGPoint(x: 0.5, y: 1-1/mainsailAspectRatio/2)
+        self.mainsail?.position = CGPoint(x: 0, y: self.pixelsPerMeter*(0.5*self.loa - self.bowToMast))
+        self.addChild(self.mainsail!)
+        
+        
     }
     
     required init?(coder aDecoder: NSCoder) {

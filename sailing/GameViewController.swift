@@ -11,7 +11,9 @@ import SpriteKit
 import GameplayKit
 
 class GameViewController: UIViewController {
-
+    
+    static let pixelsPerMeter: CGFloat = 41
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         

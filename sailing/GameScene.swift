@@ -26,9 +26,9 @@ class GameScene: SKScene {
     
     // Game Control
     private let rotateBoatNotView = true
-    private let boat = Catalina_142.init()
+//    private let pixelsPerMeter: CGFloat = 41 // pixels/m
+    private let boat = Catalina_142.init(pixelsPerMeter: GameViewController.pixelsPerMeter)
     private var v_Tŵ = CGVector(dx: 0, dy: 6) // m/s
-    private var pixelsPerMeter: CGFloat = 41 // pixels/m
     
     // simulation information
     private var lastSceneUpdateTime: TimeInterval = 0 // s
@@ -89,8 +89,6 @@ class GameScene: SKScene {
         
         self.addChild(boat)
         createWater()
-        
-        let b = boat.ρ_air
         
     }
     
@@ -161,8 +159,8 @@ class GameScene: SKScene {
     func updateWater() {
         self.enumerateChildNodes(withName: "water", using: ({
             (node, error) in
-            node.position.x -= self.boat.Δx_Bŵ.dx*self.pixelsPerMeter
-            node.position.y -= self.boat.Δx_Bŵ.dy*self.pixelsPerMeter
+            node.position.x -= self.boat.Δx_Bŵ.dx*GameViewController.pixelsPerMeter
+            node.position.y -= self.boat.Δx_Bŵ.dy*GameViewController.pixelsPerMeter
             
             if node.position.x < -(self.scene?.size.width)!*2.5 { node.position.x += (self.scene?.size.width)!*5 }
             if node.position.x > (self.scene?.size.width)!*1.5 { node.position.x -= (self.scene?.size.width)!*5 }
