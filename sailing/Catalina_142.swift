@@ -142,23 +142,24 @@ class Catalina_142: Boat {
         self.tiller = SKSpriteNode(imageNamed: "rudder")
         
         super.init(texture: SKTexture(imageNamed: "boat flat transom"), color: .black, size: CGSize(width: beam*self.pixelsPerMeter, height: loa*pixelsPerMeter))
+        self.zPosition = 0.5
         
         self.mainsail?.size = CGSize(width: boomLength*self.pixelsPerMeter/mainsailAspectRatio, height: boomLength*self.pixelsPerMeter)
         self.mainsail?.anchorPoint = CGPoint(x: 0.5, y: 1-1/mainsailAspectRatio/2)
         self.mainsail?.position = CGPoint(x: 0, y: self.pixelsPerMeter*(0.5*self.loa - self.bowToMast))
-        self.mainsail?.zPosition = 1
+        self.mainsail?.zPosition = 3
         self.addChild(self.mainsail!)
         
         self.mastTellTail?.size = CGSize(width: 0.08*self.pixelsPerMeter, height: 1.5*self.pixelsPerMeter)
         self.mastTellTail?.anchorPoint = CGPoint(x: 0.5, y: 0.95)
         self.mastTellTail?.position = self.mainsail!.position
-        self.mastTellTail?.zPosition = 2
+        self.mastTellTail?.zPosition = 4
         self.addChild(self.mastTellTail!)
         
         self.tiller?.size = CGSize(width: 0.1*self.pixelsPerMeter, height: 1.17*self.pixelsPerMeter)
         self.tiller?.anchorPoint = CGPoint(x: 0.5, y: 0.5)
         self.tiller?.position = CGPoint(x: 0, y: -self.pixelsPerMeter*0.5*self.loa)
-        self.tiller?.zPosition = 0.5
+        self.tiller?.zPosition = 1
         self.addChild(tiller!)
         
     }

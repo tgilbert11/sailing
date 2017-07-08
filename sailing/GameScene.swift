@@ -9,8 +9,6 @@
 import SpriteKit
 import GameplayKit
 
-infix operator ⋅ : MultiplicationPrecedence
-infix operator ⊙ : MultiplicationPrecedence
 
 class GameScene: SKScene {
     
@@ -78,6 +76,47 @@ class GameScene: SKScene {
         boat.position = CGPoint(x: 75, y: 0)
         self.addChild(boat)
         
+        let objectsInWater = SKSpriteNode()
+        objectsInWater.name = "objectsInWater"
+        self.addChild(objectsInWater)
+        
+        let leftStartBuoy = SKSpriteNode(imageNamed: "buoy orange no lines")
+        leftStartBuoy.position = CGPoint(x: 5*GameViewController.pixelsPerMeter, y: 10*GameViewController.pixelsPerMeter)
+        leftStartBuoy.size = CGSize(width: 0.3*GameViewController.pixelsPerMeter, height: 1.2*GameViewController.pixelsPerMeter)
+        leftStartBuoy.zPosition = 0.25
+        objectsInWater.addChild(leftStartBuoy)
+        
+        let rightStartBuoy = SKSpriteNode(imageNamed: "buoy orange no lines")
+        rightStartBuoy.position = CGPoint(x: 15*GameViewController.pixelsPerMeter, y: 10*GameViewController.pixelsPerMeter)
+        rightStartBuoy.size = CGSize(width: 0.3*GameViewController.pixelsPerMeter, height: 1.2*GameViewController.pixelsPerMeter)
+        rightStartBuoy.zPosition = 0.25
+        objectsInWater.addChild(rightStartBuoy)
+        
+        let startArrow = SKSpriteNode(imageNamed: "start")
+        startArrow.position = CGPoint(x: 8.33*GameViewController.pixelsPerMeter, y: 10*GameViewController.pixelsPerMeter)
+        startArrow.size = CGSize(width: 3*GameViewController.pixelsPerMeter, height: 6*GameViewController.pixelsPerMeter)
+        startArrow.alpha = 0.25
+        objectsInWater.addChild(startArrow)
+        
+        let finishArrow = SKSpriteNode(imageNamed: "finish")
+        finishArrow.position = CGPoint(x: 11.66*GameViewController.pixelsPerMeter, y: 10*GameViewController.pixelsPerMeter)
+        finishArrow.size = CGSize(width: 3*GameViewController.pixelsPerMeter, height: 6*GameViewController.pixelsPerMeter)
+        finishArrow.zRotation = CGFloat.pi
+        finishArrow.alpha = 0.25
+        objectsInWater.addChild(finishArrow)
+        
+        let roundArrow = SKSpriteNode(imageNamed: "round")
+        roundArrow.position = CGPoint(x: 10*GameViewController.pixelsPerMeter, y: 38.33*GameViewController.pixelsPerMeter)
+        roundArrow.size = CGSize(width: 3*GameViewController.pixelsPerMeter, height: 6*GameViewController.pixelsPerMeter)
+        roundArrow.zRotation = CGFloat.pi*3/2
+        roundArrow.alpha = 0.25
+        objectsInWater.addChild(roundArrow)
+        
+        let outerBuoy = SKSpriteNode(imageNamed: "buoy orange no lines")
+        outerBuoy.position = CGPoint(x: 10*GameViewController.pixelsPerMeter, y: 35*GameViewController.pixelsPerMeter)
+        outerBuoy.size = CGSize(width: 0.3*GameViewController.pixelsPerMeter, height: 1.2*GameViewController.pixelsPerMeter)
+        outerBuoy.zPosition = 0.25
+        objectsInWater.addChild(outerBuoy)
     }
     
     // UI creation
@@ -100,13 +139,12 @@ class GameScene: SKScene {
     override func update(_ currentTime: TimeInterval) {
         /// boat movement this update [m]
         let boatMovement = boat.moveBoat(atTime: currentTime, wind: v_Tŵ, tillerPosition: tillerPosition, mainSheetPosition: mainSheetPosition)
-        
         sceneShift -= boatMovement*GameViewController.pixelsPerMeter
-        updateGraphics(boatMovement: boatMovement)
+        updateGraphics()
     }
     
     // UI updates
-    func updateGraphics(boatMovement move: CGPoint) {
+    func updateGraphics() {
         if rotateBoatNotView {
             self.windLabel?.zRotation = v_Tŵ.θ
             self.boat.zRotation = self.boat.θ_Bŵ - CGFloat.pi/2 // NEED TO MAKE ABSOLUTELY CORRECT
@@ -147,6 +185,11 @@ class GameScene: SKScene {
             (node, error) in
             node.position.x = self.sceneShift.x - self.backgroundCenterRelativeToWorld.x
             node.position.y = self.sceneShift.y - self.backgroundCenterRelativeToWorld.y
+        }))
+        self.enumerateChildNodes(withName: "objectsInWater", using: ({
+            (node, error) in
+            node.position.x = self.sceneShift.x
+            node.position.y = self.sceneShift.y
         }))
     }
     
