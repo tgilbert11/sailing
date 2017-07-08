@@ -13,10 +13,10 @@
 		B522BFDA1EFF69E800448D25 /* GameScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = B522BFD91EFF69E800448D25 /* GameScene.swift */; };
 		B522BFDC1EFF69E800448D25 /* GameViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B522BFDB1EFF69E800448D25 /* GameViewController.swift */; };
 		B522BFDF1EFF69E800448D25 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B522BFDD1EFF69E800448D25 /* Main.storyboard */; };
-		B522BFE11EFF69E800448D25 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B522BFE01EFF69E800448D25 /* Assets.xcassets */; };
 		B522BFE41EFF69E800448D25 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B522BFE21EFF69E800448D25 /* LaunchScreen.storyboard */; };
 		B522BFEF1EFF69E900448D25 /* sailingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B522BFEE1EFF69E900448D25 /* sailingTests.swift */; };
 		B522BFFA1EFF69E900448D25 /* sailingUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B522BFF91EFF69E900448D25 /* sailingUITests.swift */; };
+		B56955B91F108CF800CC0EFC /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B56955B81F108CF800CC0EFC /* Assets.xcassets */; };
 		B591C6BB1F0DEE7F0050FD04 /* Boat.swift in Sources */ = {isa = PBXBuildFile; fileRef = B591C6BA1F0DEE7F0050FD04 /* Boat.swift */; };
 		B5F2323C1F0C92D300569D1E /* stern view.png in Resources */ = {isa = PBXBuildFile; fileRef = B5F2323B1F0C92D300569D1E /* stern view.png */; };
 		B5F2323E1F0D5BD500569D1E /* Catalina_142.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5F2323D1F0D5BD500569D1E /* Catalina_142.swift */; };
@@ -47,7 +47,6 @@
 		B522BFD91EFF69E800448D25 /* GameScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameScene.swift; sourceTree = "<group>"; };
 		B522BFDB1EFF69E800448D25 /* GameViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameViewController.swift; sourceTree = "<group>"; };
 		B522BFDE1EFF69E800448D25 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
-		B522BFE01EFF69E800448D25 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B522BFE31EFF69E800448D25 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		B522BFE51EFF69E800448D25 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B522BFEA1EFF69E900448D25 /* sailingTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = sailingTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -56,6 +55,7 @@
 		B522BFF51EFF69E900448D25 /* sailingUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = sailingUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B522BFF91EFF69E900448D25 /* sailingUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = sailingUITests.swift; sourceTree = "<group>"; };
 		B522BFFB1EFF69E900448D25 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		B56955B81F108CF800CC0EFC /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Assets.xcassets; path = ../../../../.Trash/Assets.xcassets; sourceTree = "<group>"; };
 		B591C6BA1F0DEE7F0050FD04 /* Boat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Boat.swift; sourceTree = "<group>"; };
 		B5F2323B1F0C92D300569D1E /* stern view.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "stern view.png"; path = "../../../../Desktop/stern view.png"; sourceTree = "<group>"; };
 		B5F2323D1F0D5BD500569D1E /* Catalina_142.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Catalina_142.swift; sourceTree = "<group>"; };
@@ -118,7 +118,7 @@
 				B522BFDB1EFF69E800448D25 /* GameViewController.swift */,
 				B522BFDD1EFF69E800448D25 /* Main.storyboard */,
 				B5F2323B1F0C92D300569D1E /* stern view.png */,
-				B522BFE01EFF69E800448D25 /* Assets.xcassets */,
+				B56955B81F108CF800CC0EFC /* Assets.xcassets */,
 				B522BFE21EFF69E800448D25 /* LaunchScreen.storyboard */,
 				B522BFE51EFF69E800448D25 /* Info.plist */,
 			);
@@ -250,8 +250,8 @@
 				B5F2323C1F0C92D300569D1E /* stern view.png in Resources */,
 				B522BFDF1EFF69E800448D25 /* Main.storyboard in Resources */,
 				B522BFD61EFF69E800448D25 /* GameScene.sks in Resources */,
-				B522BFE11EFF69E800448D25 /* Assets.xcassets in Resources */,
 				B522BFE41EFF69E800448D25 /* LaunchScreen.storyboard in Resources */,
+				B56955B91F108CF800CC0EFC /* Assets.xcassets in Resources */,
 				B522BFD81EFF69E800448D25 /* Actions.sks in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

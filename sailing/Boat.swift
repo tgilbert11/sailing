@@ -19,13 +19,19 @@ class Boat: SKSpriteNode {
     var Δx_Bŵ = CGVector(dx: 0, dy: 0) // Δm/s, SHOULD BE PRIVATE
     var v_Bŵ = CGVector(dx: 0, dy: 0) // m/s
     var θ_Bŵ: CGFloat = 0 // radians
+    //public private(set) var θ_Bŵ: CGFloat = 0 // radians
     var θ_bbŵ: CGFloat = 0 // radians
     var Δθ_bbŵ: CGFloat = 0 // Δradians
+    
+    
+    public var heading: CGFloat { get { return θ_Bŵ } }
+    public var location: CGVector { get { return x_Bŵ } }
+    
+    func getHeading() -> CGFloat { return θ_Bŵ }
     
     func printLocation() {
         print (self.position)
     }
-    
     
     
 }

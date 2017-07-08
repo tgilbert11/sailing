@@ -14,16 +14,6 @@ infix operator ⊙ : MultiplicationPrecedence
 
 class GameScene: SKScene {
     
-    // world = ŵ
-    // boat = B̂
-    //    lat = l̂
-    // V_Aŵ = â
-    // sail = ŝ
-    
-    // sail forces act in â
-    // hull forces act in b̂ (boat right/lat is l̂)
-    // position and velocity are in ŵ
-    
     // Game Control
     private let rotateBoatNotView = true
     private let boat = Catalina_142.init(pixelsPerMeter: GameViewController.pixelsPerMeter)
@@ -33,32 +23,25 @@ class GameScene: SKScene {
     private var lastSceneUpdateTime: TimeInterval = 0 // s
     private var firstUpdate = true
     private var bgOverlap: CGFloat = 5 // pixels
+    private var sceneWidth: CGFloat?
+    private var sceneHeight: CGFloat?
+    private var sceneShift_ŵ = CGPoint.zero // pixels
     
-    // Debugging
-    private var debugStrings = [String]()
+    // UI input things
+    private let mainSheetMax: CGFloat = 400 // pixels
+    private let tillerMax: CGFloat = 300 // pixels
     
     // SKNodes
     private var windLabel : SKLabelNode?
-    private var speedLabel : SKLabelNode?
-    private var leewardLabel : SKLabelNode?
-    private var frLabel : SKLabelNode?
-    private var frlLabel : SKLabelNode?
-    private var aaLabel : SKLabelNode?
-    private var heelLabel : SKLabelNode?
-    private var fhLabel : SKLabelNode?
-    private var lLabel : SKLabelNode?
-    private var dLabel : SKLabelNode?
+    private var speedLabel, leewardLabel : SKLabelNode?
+    private var frLabel, frlLabel, fhLabel : SKLabelNode?
+    private var aaLabel, heelLabel : SKLabelNode?
+    private var lLabel, dLabel : SKLabelNode?
     private var sternNode : SKSpriteNode?
-    private var topSailNode : SKSpriteNode?
-    private var topForcesNode : SKSpriteNode?
-    
     
     // User input trackers
     private var tillerPosition: CGFloat = 0 // [], [-1,1]
     private var mainSheetPosition: CGFloat = 0 // [], [0,1]
-    
-    // Constants
-    // ----- ----- -----
     
     
     // Initialization
@@ -75,40 +58,41 @@ class GameScene: SKScene {
         self.lLabel = self.childNode(withName: "//lLabel") as? SKLabelNode
         self.dLabel = self.childNode(withName: "//dLabel") as? SKLabelNode
         self.sternNode = self.childNode(withName: "//sternNode") as? SKSpriteNode
-        self.topSailNode = self.childNode(withName: "//topSail") as? SKSpriteNode
-        self.topForcesNode = self.childNode(withName: "//topForces") as? SKSpriteNode
         
-        boat.position = CGPoint(x: 75, y: 0)
-        
-        self.addChild(boat)
         createWater()
         
+        boat.position = CGPoint(x: 75, y: 0)
+        self.addChild(boat)
+        
+        self.sceneWidth = (self.scene?.size.width)!
+        self.sceneHeight = (self.scene?.size.height)!
     }
+    
+    // UI creation
+    func createWater() {
+        for i in -2...2 {
+            for j in -2...2 {
+                let water = SKSpriteNode(imageNamed: "water")
+                water.name = "water"
+                water.size = CGSize(width: sceneWidth!+2*bgOverlap, height: sceneHeight!+2*bgOverlap)
+                water.anchorPoint = CGPoint(x: 0, y: 0)
+                water.position = CGPoint(x: sceneWidth!*CGFloat(i)-sceneWidth!/2, y: sceneHeight!*CGFloat(j)-sceneHeight!/2)
+                water.zPosition = -1
+                self.addChild(water)
+            }
+        }
+    }
+    
     
     // Frame Updates
     override func update(_ currentTime: TimeInterval) {
-        // Called before each frame is rendered
-        boat.calculateFrame(atTime: currentTime, wind: v_Tŵ, tillerPosition: tillerPosition, mainSheetPosition: mainSheetPosition)
-        
-        debugStrings.append(" === SIMULATION ===")
-        debugStrings.append("time: \(currentTime)")
-        
-        //printCalculations()
-        
-        updateGraphics()
-        
-        debugStrings.append(self.boat.statusString())
-        
-        var finalString = ""
-        for debugString in debugStrings {
-            finalString = finalString + debugString + "\n"
-        }
-        print(finalString)
-        debugStrings.removeAll()
+        let boatMovement = boat.moveBoat(atTime: currentTime, wind: v_Tŵ, tillerPosition: tillerPosition, mainSheetPosition: mainSheetPosition)
+        sceneShift_ŵ -= boatMovement*GameViewController.pixelsPerMeter
+        updateGraphics(boatMovement: boatMovement)
     }
     
     // UI updates
-    func updateGraphics() {
+    func updateGraphics(boatMovement move: CGPoint) {
         if rotateBoatNotView {
             self.windLabel?.zRotation = v_Tŵ.θ
             self.boat.zRotation = self.boat.θ_Bŵ - CGFloat.pi/2 // NEED TO MAKE ABSOLUTELY CORRECT
@@ -119,8 +103,6 @@ class GameScene: SKScene {
         }
         
         self.sternNode?.zRotation = -self.boat.θ_bbŵ
-        self.topSailNode?.zRotation = self.boat.θ_sB̂+CGFloat.pi
-        self.topForcesNode?.zRotation = self.boat.V_AB̂.θ+CGFloat.pi
         
         let nf: NumberFormatter = {
             let temporaryFormatter = NumberFormatter()
@@ -131,8 +113,6 @@ class GameScene: SKScene {
             return temporaryFormatter
         }()
         
-        
-        
         self.speedLabel?.text = "\(nf.string(from: NSNumber.init(value: Double(self.boat.v_Bŵ.mag)*1.943))!) kts"
         self.leewardLabel?.text = "\(nf.string(from: NSNumber.init(value: Double((self.boat.v_Bŵ⋅v_Tŵ)/v_Tŵ.mag)*1.943))!) kts"
         self.frLabel?.text = "FR: \(nf.string(from: NSNumber.init(value: Double(self.boat.FR⋅self.boat.B̂)))!)"
@@ -142,14 +122,11 @@ class GameScene: SKScene {
         self.fhLabel?.text = "\(nf.string(from: NSNumber.init(value: Double(self.boat.Fh_sail.mag)))!)"
         self.lLabel?.text = "\(nf.string(from: NSNumber.init(value: Double(self.boat.L_mainsailŵ.mag)))!)"
         self.dLabel?.text = "\(nf.string(from: NSNumber.init(value: Double(self.boat.D_mainsailŵ.mag)))!)"
-        updateWater()
-    }
-    
-    func updateWater() {
+        
         self.enumerateChildNodes(withName: "water", using: ({
             (node, error) in
-            node.position.x -= self.boat.Δx_Bŵ.dx*GameViewController.pixelsPerMeter
-            node.position.y -= self.boat.Δx_Bŵ.dy*GameViewController.pixelsPerMeter
+            node.position.x -= move.x*GameViewController.pixelsPerMeter
+            node.position.y -= move.y*GameViewController.pixelsPerMeter
             
             if node.position.x < -(self.scene?.size.width)!*2.5 { node.position.x += (self.scene?.size.width)!*5 }
             if node.position.x > (self.scene?.size.width)!*1.5 { node.position.x -= (self.scene?.size.width)!*5 }
@@ -158,67 +135,40 @@ class GameScene: SKScene {
         }))
     }
     
+    // touch helper methods.  Do I need all of these?
+    func touchMoved(toPoint pos : CGPoint) {
+        if pos.y < -640 { tillerUpdated(toValue: pos.x) }
+        if pos.x < -270 && pos.y > -self.mainSheetMax { sheetUpdated(toValue: pos.y) }
+   }
+    
+    func touchDown(atPoint pos : CGPoint) {  }
+    func touchUp(atPoint pos : CGPoint) {  }
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) { for t in touches { self.touchDown(atPoint: t.location(in: self)) } }
+    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) { for t in touches { self.touchMoved(toPoint: t.location(in: self)) } }
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) { for t in touches { self.touchUp(atPoint: t.location(in: self)) } }
+    override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) { for t in touches { self.touchUp(atPoint: t.location(in: self)) } }
+    
+    
     // UI event handling
     func tillerUpdated(toValue value: CGFloat) {
-        if value > self.boat.tillerMax { tillerPosition = 1 }
-        else if value < -self.boat.tillerMax { tillerPosition = -1 }
-        else { tillerPosition = value/self.boat.tillerMax }
+        if value > self.tillerMax { tillerPosition = 1 }
+        else if value < -self.tillerMax { tillerPosition = -1 }
+        else { tillerPosition = value/self.tillerMax }
     }
     
     func sheetUpdated(toValue value: CGFloat) {
-        if value > self.boat.mainSheetMax { mainSheetPosition = 1 }
-        else if value < -self.boat.mainSheetMax { mainSheetPosition = 0 }
-        else { mainSheetPosition = (value + self.boat.mainSheetMax)/self.boat.mainSheetMax/2 }
-        //print("main sheet at \(mainSheetPosition)")
+        if value > self.mainSheetMax { mainSheetPosition = 1 }
+        else if value < -self.mainSheetMax { mainSheetPosition = 0 }
+        else { mainSheetPosition = (value + self.mainSheetMax)/self.mainSheetMax/2 }
     }
-    
-    func touchDown(atPoint pos : CGPoint) {
-        
-    }
-    
-    func touchMoved(toPoint pos : CGPoint) {
-        if pos.y < -640 { tillerUpdated(toValue: pos.x) }
-        if pos.x < -270 && pos.y > -self.boat.mainSheetMax { sheetUpdated(toValue: pos.y) }
-   }
-    
-    func touchUp(atPoint pos : CGPoint) {
-        
-    }
-    
-    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        for t in touches { self.touchDown(atPoint: t.location(in: self)) }
-    }
-    
-    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-        for t in touches { self.touchMoved(toPoint: t.location(in: self)) }
-    }
-    
-    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        for t in touches { self.touchUp(atPoint: t.location(in: self)) }
-    }
-    
-    override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
-        for t in touches { self.touchUp(atPoint: t.location(in: self)) }
-    }
-    
-    // build the UI
-    func createWater() {
-        let sceneWidth = (self.scene?.size.width)!
-        let sceneHeight = (self.scene?.size.height)!
-        for i in -2...2 {
-            for j in -2...2 {
-                let water = SKSpriteNode(imageNamed: "water")
-                water.name = "water"
-                water.size = CGSize(width: sceneWidth+2*bgOverlap, height: sceneHeight+2*bgOverlap)
-                water.anchorPoint = CGPoint(x: 0, y: 0)
-                water.position = CGPoint(x: sceneWidth*CGFloat(i)-sceneWidth/2, y: sceneHeight*CGFloat(j)-sceneHeight/2)
-                water.zPosition = -1
-                
-                self.addChild(water)
-            }
-        }
-    }
-    
 }
 
-
+extension CGPoint {
+    static func * (left: CGPoint, right: CGFloat) -> CGPoint {
+        return CGPoint(x: left.x*right, y: left.y*right)
+    }
+    static func -= (left: inout CGPoint, right: CGPoint) {
+        left.x -= right.x
+        left.y -= right.y
+    }
+}

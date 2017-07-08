@@ -47,10 +47,8 @@ class Catalina_142: Boat {
     
     // Constants
     
-    public let tillerMax: CGFloat = 300 // pixels, SHOULD BE PRIVATE
     
     private let mainSheetClosestHaul: CGFloat = 0.25 // radians
-    public let mainSheetMax: CGFloat = 400 // pixels, SHOULD BE PRIVATE
     private let mainSailMaxAngle: CGFloat = 1.22 // radians
     
     private let boatHeadingChangePerTillerKtSecond: CGFloat = 0.25 // radians/([]*m/s*s)
@@ -69,9 +67,9 @@ class Catalina_142: Boat {
     public var B̂: CGVector { get { return CGVector.init(normalWithAngle: θ_Bŵ) } } // [], SHOULD BE PRIVATE
     private var l̂: CGVector { get { return CGVector.init(normalWithAngle: θ_lŵ) } } // []
     private var V_Aŵ: CGVector { get { return v_Tŵ - v_Bŵ } } // m/s
-    public var V_AB̂: CGVector { get { return V_Aŵ.rotatedBy(radians: -θ_Bŵ) } } // m/s  // SHOULD BE PRIVATE
+    public var V_AB̂: CGVector { get { return V_Aŵ.rotatedBy(radians: -θ_Bŵ) } } // m/s, MAYBE PRIVATE
     
-    public var α: CGFloat { get { return abs(V_AB̂.θ-θ_sB̂) } } // radians, SHOULD BE PRIVATE
+    public var α: CGFloat { get { return abs(V_AB̂.θ-θ_sB̂) } } // radians, MAYBE PRIVATE
     public var L_mainsailŵ: CGVector { get { return V_Aŵ.rotatedBy(radians: θ_lB̂).normalized() * 0.5 * ρ_air * V_Aŵ.mag2 * A_mainsail * cos(θ_bbŵ) * CL_mainsail } } // N, SHOULD BE PRIVATE
     public var D_mainsailŵ: CGVector { get { return V_Aŵ/V_Aŵ.mag * 0.5 * ρ_air * V_Aŵ.mag2 * A_mainsail * cos(θ_bbŵ) * CD_mainsail } } // N, SHOULD BE PRIVATE
     private var D_hullŵ: CGVector { get { return
@@ -119,11 +117,13 @@ class Catalina_142: Boat {
     }}
     
     private var CD_mainsail: CGFloat { get {
-        if α > CGFloat(50).deg2rad {
-            return 1.6
-        }
-        else {
+        switch α {
+        case 0 ..< CGFloat(50).deg2rad:
             return 0.2 + 1.4*pow(α/CGFloat(50).deg2rad,2)
+        case CGFloat(50).deg2rad ..< CGFloat(100).deg2rad:
+            return 1.6
+        default:
+            return 1.6 - 1.6*((α-CGFloat(80).deg2rad)/CGFloat(80).deg2rad)
         }
     }}
     
@@ -149,13 +149,13 @@ class Catalina_142: Boat {
         self.mainsail?.zPosition = 1
         self.addChild(self.mainsail!)
         
-        self.mastTellTail?.size = CGSize(width: 0.15*self.pixelsPerMeter, height: 1.5*self.pixelsPerMeter)
+        self.mastTellTail?.size = CGSize(width: 0.08*self.pixelsPerMeter, height: 1.5*self.pixelsPerMeter)
         self.mastTellTail?.anchorPoint = CGPoint(x: 0.5, y: 0.95)
         self.mastTellTail?.position = self.mainsail!.position
         self.mastTellTail?.zPosition = 2
         self.addChild(self.mastTellTail!)
         
-        self.tiller?.size = CGSize(width: 0.15*self.pixelsPerMeter, height: 1.75*self.pixelsPerMeter)
+        self.tiller?.size = CGSize(width: 0.1*self.pixelsPerMeter, height: 1.17*self.pixelsPerMeter)
         self.tiller?.anchorPoint = CGPoint(x: 0.5, y: 0.5)
         self.tiller?.position = CGPoint(x: 0, y: -self.pixelsPerMeter*0.5*self.loa)
         self.tiller?.zPosition = 0.5
@@ -168,12 +168,13 @@ class Catalina_142: Boat {
     }
     
     // Frame Updates
-    public func calculateFrame(atTime currentTime: TimeInterval, wind: CGVector, tillerPosition tiller: CGFloat, mainSheetPosition mainsheet: CGFloat) {
+    public func moveBoat(atTime currentTime: TimeInterval, wind: CGVector, tillerPosition tiller: CGFloat, mainSheetPosition mainsheet: CGFloat) -> CGPoint {
         // Called before each frame is rendered
         v_Tŵ = wind
         tillerPosition = tiller
         mainSheetPosition = mainsheet
-        let timeSinceLastScene = currentTime - (lastSceneUpdateTime ?? currentTime)
+        var timeSinceLastScene = currentTime - (lastSceneUpdateTime  ?? currentTime)
+        if timeSinceLastScene > 0.100 { timeSinceLastScene = 0.0166 }
         lastSceneUpdateTime = currentTime
         
         //printCalculations()
@@ -194,7 +195,9 @@ class Catalina_142: Boat {
         self.mastTellTail?.zRotation = self.V_AB̂.θ + CGFloat.pi // NEED TO MAKE ABSOLUTELY CORRECT
         self.tiller?.zRotation = -self.tillerPosition*CGFloat.pi/3
         
+        return CGPoint(x: Δx_Bŵ.dx, y: Δx_Bŵ.dy)
     }
+    
     
     // Printing
     public func statusString() -> String {
@@ -232,20 +235,6 @@ class Catalina_142: Boat {
         }
         return finalString
         
-    }
-    
-    // UI event handling
-    func tillerUpdated(toValue value: CGFloat) {
-        if value > tillerMax { tillerPosition = 1 }
-        else if value < -tillerMax { tillerPosition = -1 }
-        else { tillerPosition = value/tillerMax }
-    }
-    
-    func sheetUpdated(toValue value: CGFloat) {
-        if value > mainSheetMax { mainSheetPosition = 1 }
-        else if value < -mainSheetMax { mainSheetPosition = 0 }
-        else { mainSheetPosition = (value + mainSheetMax)/mainSheetMax/2 }
-        //print("main sheet at \(mainSheetPosition)")
     }
     
 }
