@@ -17,19 +17,28 @@ class GameScene: SKScene {
     // Game Control
     private let rotateBoatNotView = true
     private let boat = Catalina_142.init(pixelsPerMeter: GameViewController.pixelsPerMeter)
-    private var v_Tŵ = CGVector(dx: 0, dy: 6) // m/s
+    /// [m/s]
+    private var v_Tŵ = CGVector(dx: 0, dy: 6)
     
     // simulation information
-    private var lastSceneUpdateTime: TimeInterval = 0 // s
-    private var firstUpdate = true
-    private var bgOverlap: CGFloat = 5 // pixels
+    /// [s]
+    private var lastSceneUpdateTime: TimeInterval = 0
+    /// [pixels]
     private var sceneWidth: CGFloat?
+    /// [pixels]
     private var sceneHeight: CGFloat?
-    private var sceneShift_ŵ = CGPoint.zero // pixels
+    /// single-sided overlap in x and y of consecutive background tiles [pixels]
+    private var bgOverlap: CGFloat = 5
+    /// position of center of scene relative to real world [pixels]
+    private var sceneShift = CGPoint.zero
+    /// position of background center relative to world to follow scene center [pixels]
+    private var backgroundCenterRelativeToWorld = CGPoint.zero // pixels
     
     // UI input things
-    private let mainSheetMax: CGFloat = 400 // pixels
-    private let tillerMax: CGFloat = 300 // pixels
+    /// maximum distance from y = 0 where mainsheet UI area is active [pixels]
+    private let mainSheetMax: CGFloat = 400
+    /// maximum distance from x = 0 where tiller UI area is active [pixels]
+    private let tillerMax: CGFloat = 300 /// poop
     
     // SKNodes
     private var windLabel : SKLabelNode?
@@ -40,8 +49,10 @@ class GameScene: SKScene {
     private var sternNode : SKSpriteNode?
     
     // User input trackers
-    private var tillerPosition: CGFloat = 0 // [], [-1,1]
-    private var mainSheetPosition: CGFloat = 0 // [], [0,1]
+    /// latest commanded position of tiller from -1 (full left turn) to 1 (full right turn) []
+    private var tillerPosition: CGFloat = 0
+    /// latest commanded position of mainsheet from 0 (sheeted in) to 1 (sheeted out) []
+    private var mainSheetPosition: CGFloat = 0
     
     
     // Initialization
@@ -59,13 +70,14 @@ class GameScene: SKScene {
         self.dLabel = self.childNode(withName: "//dLabel") as? SKLabelNode
         self.sternNode = self.childNode(withName: "//sternNode") as? SKSpriteNode
         
+        self.sceneWidth = (self.scene?.size.width)!
+        self.sceneHeight = (self.scene?.size.height)!
+        
         createWater()
         
         boat.position = CGPoint(x: 75, y: 0)
         self.addChild(boat)
         
-        self.sceneWidth = (self.scene?.size.width)!
-        self.sceneHeight = (self.scene?.size.height)!
     }
     
     // UI creation
@@ -74,9 +86,9 @@ class GameScene: SKScene {
             for j in -2...2 {
                 let water = SKSpriteNode(imageNamed: "water")
                 water.name = "water"
-                water.size = CGSize(width: sceneWidth!+2*bgOverlap, height: sceneHeight!+2*bgOverlap)
-                water.anchorPoint = CGPoint(x: 0, y: 0)
-                water.position = CGPoint(x: sceneWidth!*CGFloat(i)-sceneWidth!/2, y: sceneHeight!*CGFloat(j)-sceneHeight!/2)
+                water.size = CGSize(width: sceneWidth!+bgOverlap, height: sceneHeight!+bgOverlap)
+                water.anchorPoint = CGPoint(x: 0.5+CGFloat(i), y: 0.5+CGFloat(j))
+                water.position = CGPoint(x: 0, y: 0)
                 water.zPosition = -1
                 self.addChild(water)
             }
@@ -86,8 +98,10 @@ class GameScene: SKScene {
     
     // Frame Updates
     override func update(_ currentTime: TimeInterval) {
+        /// boat movement this update [m]
         let boatMovement = boat.moveBoat(atTime: currentTime, wind: v_Tŵ, tillerPosition: tillerPosition, mainSheetPosition: mainSheetPosition)
-        sceneShift_ŵ -= boatMovement*GameViewController.pixelsPerMeter
+        
+        sceneShift -= boatMovement*GameViewController.pixelsPerMeter
         updateGraphics(boatMovement: boatMovement)
     }
     
@@ -123,15 +137,16 @@ class GameScene: SKScene {
         self.lLabel?.text = "\(nf.string(from: NSNumber.init(value: Double(self.boat.L_mainsailŵ.mag)))!)"
         self.dLabel?.text = "\(nf.string(from: NSNumber.init(value: Double(self.boat.D_mainsailŵ.mag)))!)"
         
+        
+        while self.sceneShift.x < self.backgroundCenterRelativeToWorld.x - self.sceneWidth! { self.backgroundCenterRelativeToWorld.x -= self.sceneWidth! }
+        while self.sceneShift.x > self.backgroundCenterRelativeToWorld.x + self.sceneWidth! { self.backgroundCenterRelativeToWorld.x += self.sceneWidth! }
+        while self.sceneShift.y < self.backgroundCenterRelativeToWorld.y - self.sceneHeight! { self.backgroundCenterRelativeToWorld.y -= self.sceneHeight! }
+        while self.sceneShift.y > self.backgroundCenterRelativeToWorld.y + self.sceneHeight! { self.backgroundCenterRelativeToWorld.y += self.sceneHeight! }
+        
         self.enumerateChildNodes(withName: "water", using: ({
             (node, error) in
-            node.position.x -= move.x*GameViewController.pixelsPerMeter
-            node.position.y -= move.y*GameViewController.pixelsPerMeter
-            
-            if node.position.x < -(self.scene?.size.width)!*2.5 { node.position.x += (self.scene?.size.width)!*5 }
-            if node.position.x > (self.scene?.size.width)!*1.5 { node.position.x -= (self.scene?.size.width)!*5 }
-            if node.position.y < -(self.scene?.size.height)!*2.5 { node.position.y += (self.scene?.size.height)!*5 }
-            if node.position.y > (self.scene?.size.height)!*1.5 { node.position.y -= (self.scene?.size.height)!*5 }
+            node.position.x = self.sceneShift.x - self.backgroundCenterRelativeToWorld.x
+            node.position.y = self.sceneShift.y - self.backgroundCenterRelativeToWorld.y
         }))
     }
     
@@ -166,6 +181,10 @@ class GameScene: SKScene {
 extension CGPoint {
     static func * (left: CGPoint, right: CGFloat) -> CGPoint {
         return CGPoint(x: left.x*right, y: left.y*right)
+    }
+    static func += (left: inout CGPoint, right: CGPoint) {
+        left.x += right.x
+        left.y += right.y
     }
     static func -= (left: inout CGPoint, right: CGPoint) {
         left.x -= right.x

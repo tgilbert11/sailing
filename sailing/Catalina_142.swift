@@ -168,6 +168,15 @@ class Catalina_142: Boat {
     }
     
     // Frame Updates
+    /**
+    - Parameters:
+        - currentTime: time of simulation (will be subtracted from last submitted update within boat) [s]
+       - wind: velocity of wind acting on boat [m/s]
+       - tillerPosition: commanded position of tiller from -1 (full left turn) to 1 (full right turn) []
+       - mainSheetPosition: commanded position of mainsheet from 0 (sheeted in) to 1 (sheeted out) []
+    - Returns:
+      change in boat position this update [m]
+     */
     public func moveBoat(atTime currentTime: TimeInterval, wind: CGVector, tillerPosition tiller: CGFloat, mainSheetPosition mainsheet: CGFloat) -> CGPoint {
         // Called before each frame is rendered
         v_Tŵ = wind

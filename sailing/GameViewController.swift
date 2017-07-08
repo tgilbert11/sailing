@@ -11,7 +11,7 @@ import SpriteKit
 import GameplayKit
 
 class GameViewController: UIViewController {
-    
+    /// conversion from meters to pixels used in graphics [pixels/m]
     static let pixelsPerMeter: CGFloat = 41
     
     override func viewDidLoad() {
