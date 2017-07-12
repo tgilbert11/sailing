@@ -13,8 +13,6 @@ class Catalina_142: Boat {
     
     // input variables
     
-    //private let pixelsPerMeter: CGFloat
-    
     var Δx_Bŵ = CGVector(dx: 0, dy: 0) // Δm/s, SHOULD BE PRIVATE
     var Δθ_bbŵ: CGFloat = 0 // Δradians
     
@@ -23,7 +21,7 @@ class Catalina_142: Boat {
     
     // ----- ----- -----
     
-    init(pixelsPerMeter: CGFloat) {
+    init() {
         
         let CD_mainsail = {
             (α: CGFloat) -> CGFloat in
@@ -54,8 +52,6 @@ class Catalina_142: Boat {
                     return 0
                 }
         }
-        
-        //self.pixelsPerMeter = pixelsPerMeter
         
         super.init(beam: 1.88, loa: 4.32, bowToMast: 1.52, boomLength: 2.59, tillerLength: 1.2, mainsailArea: 6.81, boatMass: 250, boatWaterContactArea: 7, hullCDForward: 0.005, hullCDLateral: 0.4, mainsailAverageHeight: 2.75, centerboardAverageDepth: 0.4, boatIbb: 500, mainSheetClosestHaul: 0.25, mainSailMaxAngle: 1.22, cdMainsail: CD_mainsail, clMainsail: CL_mainsail)
         
