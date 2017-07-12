@@ -14,9 +14,9 @@ class GameScene: SKScene {
     
     // Game Control
     private let rotateBoatNotView = true
-    private let boat = Catalina_142.init(pixelsPerMeter: GameViewController.pixelsPerMeter)
+    private let boat: Catalina_142 = Catalina_142(pixelsPerMeter: GameViewController.pixelsPerMeter)
     /// [m/s]
-    private var v_Tŵ = CGVector(dx: 0, dy: 6)
+    private var v_Tŵ = CGVector(dx: 0, dy: -6)
     
     // simulation information
     /// [s]
@@ -30,13 +30,15 @@ class GameScene: SKScene {
     /// position of center of scene relative to real world [pixels]
     private var sceneShift = CGPoint.zero
     /// position of background center relative to world to follow scene center [pixels]
-    private var backgroundCenterRelativeToWorld = CGPoint.zero // pixels
+    private var backgroundCenterRelativeToWorld = CGPoint.zero
+    /// ratio of pixels per meter [pixels/m]
+    private var pixelsPerMeter: CGFloat { get { return GameViewController.pixelsPerMeter } }
     
     // UI input things
     /// maximum distance from y = 0 where mainsheet UI area is active [pixels]
     private let mainSheetMax: CGFloat = 400
     /// maximum distance from x = 0 where tiller UI area is active [pixels]
-    private let tillerMax: CGFloat = 300 /// poop
+    private let tillerMax: CGFloat = 300
     
     // SKNodes
     private var windLabel : SKLabelNode?
@@ -56,6 +58,8 @@ class GameScene: SKScene {
     // Initialization
     override func didMove(to view: SKView) {
         
+        print(self.userData?.value(forKey: "ppm") as! CGFloat)
+        
         self.windLabel = self.childNode(withName: "//windLabel") as? SKLabelNode
         self.speedLabel = self.childNode(withName: "//speedLabel") as? SKLabelNode
         self.leewardLabel = self.childNode(withName: "//leewardLabel") as? SKLabelNode
@@ -73,7 +77,10 @@ class GameScene: SKScene {
         
         createWater()
         
-        boat.position = CGPoint(x: 75, y: 0)
+        self.boat.position = CGPoint(x: 75, y: 0)
+        self.boat.xScale = self.pixelsPerMeter
+        self.boat.yScale = self.pixelsPerMeter
+        self.sceneShift = CGPoint(x: 5*GameViewController.pixelsPerMeter + 75, y: -5*GameViewController.pixelsPerMeter)
         self.addChild(boat)
         
         let objectsInWater = SKSpriteNode()
@@ -101,22 +108,71 @@ class GameScene: SKScene {
         let finishArrow = SKSpriteNode(imageNamed: "finish")
         finishArrow.position = CGPoint(x: 11.66*GameViewController.pixelsPerMeter, y: 10*GameViewController.pixelsPerMeter)
         finishArrow.size = CGSize(width: 3*GameViewController.pixelsPerMeter, height: 6*GameViewController.pixelsPerMeter)
-        finishArrow.zRotation = CGFloat.pi
+        finishArrow.zRotation = 0
         finishArrow.alpha = 0.25
         objectsInWater.addChild(finishArrow)
         
-        let roundArrow = SKSpriteNode(imageNamed: "round")
-        roundArrow.position = CGPoint(x: 10*GameViewController.pixelsPerMeter, y: 38.33*GameViewController.pixelsPerMeter)
-        roundArrow.size = CGSize(width: 3*GameViewController.pixelsPerMeter, height: 6*GameViewController.pixelsPerMeter)
-        roundArrow.zRotation = CGFloat.pi*3/2
-        roundArrow.alpha = 0.25
-        objectsInWater.addChild(roundArrow)
+        let windwardMark = SKSpriteNode(imageNamed: "buoy orange no lines")
+        windwardMark.position = CGPoint(x: 10*GameViewController.pixelsPerMeter, y: 35*GameViewController.pixelsPerMeter)
+        windwardMark.size = CGSize(width: 0.3*GameViewController.pixelsPerMeter, height: 1.2*GameViewController.pixelsPerMeter)
+        windwardMark.zPosition = 0.25
+        objectsInWater.addChild(windwardMark)
         
-        let outerBuoy = SKSpriteNode(imageNamed: "buoy orange no lines")
-        outerBuoy.position = CGPoint(x: 10*GameViewController.pixelsPerMeter, y: 35*GameViewController.pixelsPerMeter)
-        outerBuoy.size = CGSize(width: 0.3*GameViewController.pixelsPerMeter, height: 1.2*GameViewController.pixelsPerMeter)
-        outerBuoy.zPosition = 0.25
-        objectsInWater.addChild(outerBuoy)
+        let windwardApproachArrow = SKSpriteNode(imageNamed: "arrow blank up")
+        windwardApproachArrow.position = CGPoint(x: 13*GameViewController.pixelsPerMeter, y: 35*GameViewController.pixelsPerMeter)
+        windwardApproachArrow.size = CGSize(width: 3*GameViewController.pixelsPerMeter, height: 6*GameViewController.pixelsPerMeter)
+        windwardApproachArrow.zRotation = 0
+        windwardApproachArrow.alpha = 0.25
+        objectsInWater.addChild(windwardApproachArrow)
+        
+        let windwardDepartureArrow = SKSpriteNode(imageNamed: "arrow blank up")
+        windwardDepartureArrow.position = CGPoint(x: 7*GameViewController.pixelsPerMeter, y: 38*GameViewController.pixelsPerMeter)
+        windwardDepartureArrow.size = CGSize(width: 3*GameViewController.pixelsPerMeter, height: 6*GameViewController.pixelsPerMeter)
+        windwardDepartureArrow.zRotation = CGFloat.pi*3/4
+        windwardDepartureArrow.alpha = 0.25
+        objectsInWater.addChild(windwardDepartureArrow)
+        
+        let gybeMark = SKSpriteNode(imageNamed: "buoy orange no lines")
+        gybeMark.position = CGPoint(x: -15*GameViewController.pixelsPerMeter, y: 10*GameViewController.pixelsPerMeter)
+        gybeMark.size = CGSize(width: 0.3*GameViewController.pixelsPerMeter, height: 1.2*GameViewController.pixelsPerMeter)
+        gybeMark.zPosition = 0.25
+        objectsInWater.addChild(gybeMark)
+        
+        let gybeApproachArrow = SKSpriteNode(imageNamed: "arrow blank up")
+        gybeApproachArrow.position = CGPoint(x: -18*GameViewController.pixelsPerMeter, y: 13*GameViewController.pixelsPerMeter)
+        gybeApproachArrow.size = CGSize(width: 3*GameViewController.pixelsPerMeter, height: 6*GameViewController.pixelsPerMeter)
+        gybeApproachArrow.zRotation = CGFloat.pi*3/4
+        gybeApproachArrow.alpha = 0.25
+        objectsInWater.addChild(gybeApproachArrow)
+        
+        let gybeDepartureArrow = SKSpriteNode(imageNamed: "arrow blank up")
+        gybeDepartureArrow.position = CGPoint(x: -18*GameViewController.pixelsPerMeter, y: 7*GameViewController.pixelsPerMeter)
+        gybeDepartureArrow.size = CGSize(width: 3*GameViewController.pixelsPerMeter, height: 6*GameViewController.pixelsPerMeter)
+        gybeDepartureArrow.zRotation = CGFloat.pi*5/4
+        gybeDepartureArrow.alpha = 0.25
+        objectsInWater.addChild(gybeDepartureArrow)
+        
+        let leewardMark = SKSpriteNode(imageNamed: "buoy orange no lines")
+        leewardMark.position = CGPoint(x: 10*GameViewController.pixelsPerMeter, y: -15*GameViewController.pixelsPerMeter)
+        leewardMark.size = CGSize(width: 0.3*GameViewController.pixelsPerMeter, height: 1.2*GameViewController.pixelsPerMeter)
+        leewardMark.zPosition = 0.25
+        objectsInWater.addChild(leewardMark)
+        
+        let leewardApproachArrow = SKSpriteNode(imageNamed: "arrow blank up")
+        leewardApproachArrow.position = CGPoint(x: 7*GameViewController.pixelsPerMeter, y: -18*GameViewController.pixelsPerMeter)
+        leewardApproachArrow.size = CGSize(width: 3*GameViewController.pixelsPerMeter, height: 6*GameViewController.pixelsPerMeter)
+        leewardApproachArrow.zRotation = CGFloat.pi*5/4
+        leewardApproachArrow.alpha = 0.25
+        objectsInWater.addChild(leewardApproachArrow)
+        
+        let leewardDepartureArrow = SKSpriteNode(imageNamed: "arrow blank up")
+        leewardDepartureArrow.position = CGPoint(x: 13*GameViewController.pixelsPerMeter, y: -15*GameViewController.pixelsPerMeter)
+        leewardDepartureArrow.size = CGSize(width: 3*GameViewController.pixelsPerMeter, height: 6*GameViewController.pixelsPerMeter)
+        leewardDepartureArrow.zRotation = 0
+        leewardDepartureArrow.alpha = 0.25
+        objectsInWater.addChild(leewardDepartureArrow)
+        
+        
     }
     
     // UI creation
