@@ -26,7 +26,6 @@ class Boat: SKSpriteNode {
     let loa: CGFloat // m
     let tillerLength: CGFloat // m
     let tillerAspectRatio: CGFloat // []
-//    let tillerAspectRatio: CGFloat = 12 // []
     let M_boat: CGFloat // kg
     let S_boat: CGFloat // m2
     let CD_hull_R: CGFloat // [], 0.011 by lookup
@@ -47,13 +46,7 @@ class Boat: SKSpriteNode {
     var lastSceneUpdateTime: TimeInterval? = 0
     
     
-    
     init(blueprint: BoatBlueprint) {
-//        init(beam: CGFloat, loa: CGFloat, bowToMast: CGFloat, boomLength: CGFloat, tillerLength: CGFloat,
-//        mainsailArea: CGFloat, boatMass: CGFloat, boatWaterContactArea: CGFloat, hullCDForward: CGFloat,
-//        hullCDLateral: CGFloat, mainsailAverageHeight: CGFloat, centerboardAverageDepth: CGFloat, boatIbb: CGFloat,
-//        mainSheetClosestHaul: CGFloat, mainSailMaxAngle: CGFloat, cdMainsail: @escaping ((CGFloat) -> CGFloat),
-//        clMainsail: @escaping ((CGFloat) -> CGFloat)) {
         
         self.beam = blueprint.beam
         self.loa = blueprint.loa
@@ -111,7 +104,6 @@ extension CGVector: CustomStringConvertible {
         nf.minimumIntegerDigits = 3
         nf.string(from: NSNumber(value: Double(self.mag)))
         return "(mag: \(nf.string(from: NSNumber(value: Double(self.mag)))!), θ: \(nf.string(from: NSNumber(value: Double(self.θ.rad2deg)))!))"
-        //return "(\(self.dx), \(self.dy)); (mag: \(self.mag), θ: \(self.θ))"
     }
     
     func rotatedBy(radians θ: CGFloat) -> CGVector {

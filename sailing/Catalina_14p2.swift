@@ -18,10 +18,6 @@ class Catalina_14p2: Sloop {
     
     private let boatHeadingChangePerTillerKtSecond: CGFloat = 0.25 // radians/([]*m/s*s)
     
-    
-    
-    // ----- ----- -----
-    
     init() {
         
         let boatBlueprint = BoatBlueprint(beam: 1.88, loa: 4.52, tillerLength: 1.2, tillerAspectRatio: 12, boatMass: 250, boatWaterContactArea: 7, hullCDForward: 0.005, hullCDLateral: 0.4, boatIbb: 500)
@@ -60,7 +56,6 @@ class Catalina_14p2: Sloop {
         
         let sloopBlueprint = SloopBlueprint(catboatBlueprint: catboatBlueprint)
         
-        //        super.init(beam: 1.88, loa: 4.32, bowToMast: 1.52, boomLength: 2.59, tillerLength: 1.2, mainsailArea: 6.81, boatMass: 250, boatWaterContactArea: 7, hullCDForward: 0.005, hullCDLateral: 0.4, mainsailAverageHeight: 2.75, centerboardAverageDepth: 0.4, boatIbb: 500, mainSheetClosestHaul: 0.25, mainSailMaxAngle: 1.22, cdMainsail: CD_mainsail, clMainsail: CL_mainsail)
         super.init(blueprint: sloopBlueprint)
         
         self.zPosition = 0.5
@@ -82,15 +77,12 @@ class Catalina_14p2: Sloop {
      change in boat position this update [m]
      */
     public func moveBoat(atTime currentTime: TimeInterval, wind: CGVector, tillerPosition tiller: CGFloat, mainSheetPosition mainsheet: CGFloat) -> CGPoint {
-        // Called before each frame is rendered
         v_Tŵ = wind
         tillerPosition = tiller
         mainsheetPosition = mainsheet
         var timeSinceLastScene = currentTime - (lastSceneUpdateTime  ?? currentTime)
         if timeSinceLastScene > 0.100 { timeSinceLastScene = 0.0166 }
         lastSceneUpdateTime = currentTime
-        
-        //printCalculations()
         
         Δx_Bŵ = v_Bŵ * CGFloat(timeSinceLastScene)
         x_Bŵ = x_Bŵ + Δx_Bŵ
