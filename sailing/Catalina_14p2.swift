@@ -1,5 +1,5 @@
 //
-//  Catalina_142.swift
+//  Catalina_14p2.swift
 //  sailing
 //
 //  Created by Taylor H. Gilbert on 7/5/17.
@@ -9,7 +9,7 @@
 import SpriteKit
 import GameplayKit
 
-class Catalina_142: Sloop {
+class Catalina_14p2: Sloop {
     
     // input variables
     
@@ -28,39 +28,39 @@ class Catalina_142: Sloop {
         
         let CD_mainsail = {
             (α: CGFloat) -> CGFloat in
-                switch α {
-                case 0 ..< CGFloat(50).deg2rad:
-                    return 0.2 + 1.4*pow(α/CGFloat(50).deg2rad,2)
-                case CGFloat(50).deg2rad ..< CGFloat(100).deg2rad:
-                    return 1.6
-                default:
-                    return 1.6 - 1.6*((α-CGFloat(80).deg2rad)/CGFloat(80).deg2rad)
-                }
+            switch α {
+            case 0 ..< CGFloat(50).deg2rad:
+                return 0.2 + 1.4*pow(α/CGFloat(50).deg2rad,2)
+            case CGFloat(50).deg2rad ..< CGFloat(100).deg2rad:
+                return 1.6
+            default:
+                return 1.6 - 1.6*((α-CGFloat(80).deg2rad)/CGFloat(80).deg2rad)
+            }
         }
         
         let CL_mainsail = {
             (α: CGFloat) -> CGFloat in
-                switch α {
-                case 0 ..< CGFloat(10).deg2rad:
-                    return 0
-                case CGFloat(10).deg2rad ..< CGFloat(20).deg2rad:
-                    return 0 + 1.2*(α-CGFloat(10).deg2rad)/CGFloat(10).deg2rad
-                case CGFloat(20).deg2rad ..< CGFloat(30).deg2rad:
-                    return 1.2 + 0.4*(α-CGFloat(20).deg2rad)/CGFloat(10).deg2rad
-                case CGFloat(30).deg2rad ..< CGFloat(50).deg2rad:
-                    return 1.6 - 1.2*(α-CGFloat(30).deg2rad)/CGFloat(20).deg2rad
-                case CGFloat(50).deg2rad ..< CGFloat(100).deg2rad:
-                    return 0.4 - 0.4*(α-CGFloat(50).deg2rad)/CGFloat(50).deg2rad
-                default:
-                    return 0
-                }
+            switch α {
+            case 0 ..< CGFloat(10).deg2rad:
+                return 0
+            case CGFloat(10).deg2rad ..< CGFloat(20).deg2rad:
+                return 0 + 1.2*(α-CGFloat(10).deg2rad)/CGFloat(10).deg2rad
+            case CGFloat(20).deg2rad ..< CGFloat(30).deg2rad:
+                return 1.2 + 0.4*(α-CGFloat(20).deg2rad)/CGFloat(10).deg2rad
+            case CGFloat(30).deg2rad ..< CGFloat(50).deg2rad:
+                return 1.6 - 1.2*(α-CGFloat(30).deg2rad)/CGFloat(20).deg2rad
+            case CGFloat(50).deg2rad ..< CGFloat(100).deg2rad:
+                return 0.4 - 0.4*(α-CGFloat(50).deg2rad)/CGFloat(50).deg2rad
+            default:
+                return 0
+            }
         }
         
         let catboatBlueprint = CatboatBlueprint(boatBlueprint: boatBlueprint, bowToMast: 1.52, boomLength: 2.59, mainsailArea: 6.81, mainsailHeight: 2.75, centerboardDepth: 0.4, mainsheetClosestHaul: 0.25, mainsailMaxAngle: 1.22, mainsailCD: CD_mainsail, mainsailCL: CL_mainsail)
         
         let sloopBlueprint = SloopBlueprint(catboatBlueprint: catboatBlueprint)
         
-//        super.init(beam: 1.88, loa: 4.32, bowToMast: 1.52, boomLength: 2.59, tillerLength: 1.2, mainsailArea: 6.81, boatMass: 250, boatWaterContactArea: 7, hullCDForward: 0.005, hullCDLateral: 0.4, mainsailAverageHeight: 2.75, centerboardAverageDepth: 0.4, boatIbb: 500, mainSheetClosestHaul: 0.25, mainSailMaxAngle: 1.22, cdMainsail: CD_mainsail, clMainsail: CL_mainsail)
+        //        super.init(beam: 1.88, loa: 4.32, bowToMast: 1.52, boomLength: 2.59, tillerLength: 1.2, mainsailArea: 6.81, boatMass: 250, boatWaterContactArea: 7, hullCDForward: 0.005, hullCDLateral: 0.4, mainsailAverageHeight: 2.75, centerboardAverageDepth: 0.4, boatIbb: 500, mainSheetClosestHaul: 0.25, mainSailMaxAngle: 1.22, cdMainsail: CD_mainsail, clMainsail: CL_mainsail)
         super.init(blueprint: sloopBlueprint)
         
         self.zPosition = 0.5
@@ -73,13 +73,13 @@ class Catalina_142: Sloop {
     
     // Frame Updates
     /**
-    - Parameters:
-        - currentTime: time of simulation (will be subtracted from last submitted update within boat) [s]
-       - wind: velocity of wind acting on boat [m/s]
-       - tillerPosition: commanded position of tiller from -1 (full left turn) to 1 (full right turn) []
-       - mainSheetPosition: commanded position of mainsheet from 0 (sheeted in) to 1 (sheeted out) []
-    - Returns:
-      change in boat position this update [m]
+     - Parameters:
+     - currentTime: time of simulation (will be subtracted from last submitted update within boat) [s]
+     - wind: velocity of wind acting on boat [m/s]
+     - tillerPosition: commanded position of tiller from -1 (full left turn) to 1 (full right turn) []
+     - mainSheetPosition: commanded position of mainsheet from 0 (sheeted in) to 1 (sheeted out) []
+     - Returns:
+     change in boat position this update [m]
      */
     public func moveBoat(atTime currentTime: TimeInterval, wind: CGVector, tillerPosition tiller: CGFloat, mainSheetPosition mainsheet: CGFloat) -> CGPoint {
         // Called before each frame is rendered
@@ -151,3 +151,4 @@ class Catalina_142: Sloop {
     }
     
 }
+

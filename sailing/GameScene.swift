@@ -14,7 +14,7 @@ class GameScene: SKScene {
     
     // Game Control
     private let rotateBoatNotView = true
-    private let boat = Catalina_142()
+    private let boat = Catalina_14p2()
     /// [m/s]
     private var v_Tŵ = CGVector(dx: 0, dy: -6)
     
