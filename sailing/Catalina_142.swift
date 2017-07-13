@@ -9,7 +9,7 @@
 import SpriteKit
 import GameplayKit
 
-class Catalina_142: Boat {
+class Catalina_142: Sloop {
     
     // input variables
     
@@ -19,9 +19,12 @@ class Catalina_142: Boat {
     private let boatHeadingChangePerTillerKtSecond: CGFloat = 0.25 // radians/([]*m/s*s)
     
     
+    
     // ----- ----- -----
     
     init() {
+        
+        let boatBlueprint = BoatBlueprint(beam: 1.88, loa: 4.52, tillerLength: 1.2, tillerAspectRatio: 12, boatMass: 250, boatWaterContactArea: 7, hullCDForward: 0.005, hullCDLateral: 0.4, boatIbb: 500)
         
         let CD_mainsail = {
             (α: CGFloat) -> CGFloat in
@@ -53,7 +56,12 @@ class Catalina_142: Boat {
                 }
         }
         
-        super.init(beam: 1.88, loa: 4.32, bowToMast: 1.52, boomLength: 2.59, tillerLength: 1.2, mainsailArea: 6.81, boatMass: 250, boatWaterContactArea: 7, hullCDForward: 0.005, hullCDLateral: 0.4, mainsailAverageHeight: 2.75, centerboardAverageDepth: 0.4, boatIbb: 500, mainSheetClosestHaul: 0.25, mainSailMaxAngle: 1.22, cdMainsail: CD_mainsail, clMainsail: CL_mainsail)
+        let catboatBlueprint = CatboatBlueprint(boatBlueprint: boatBlueprint, bowToMast: 1.52, boomLength: 2.59, mainsailArea: 6.81, mainsailHeight: 2.75, centerboardDepth: 0.4, mainsheetClosestHaul: 0.25, mainsailMaxAngle: 1.22, mainsailCD: CD_mainsail, mainsailCL: CL_mainsail)
+        
+        let sloopBlueprint = SloopBlueprint(catboatBlueprint: catboatBlueprint)
+        
+//        super.init(beam: 1.88, loa: 4.32, bowToMast: 1.52, boomLength: 2.59, tillerLength: 1.2, mainsailArea: 6.81, boatMass: 250, boatWaterContactArea: 7, hullCDForward: 0.005, hullCDLateral: 0.4, mainsailAverageHeight: 2.75, centerboardAverageDepth: 0.4, boatIbb: 500, mainSheetClosestHaul: 0.25, mainSailMaxAngle: 1.22, cdMainsail: CD_mainsail, clMainsail: CL_mainsail)
+        super.init(blueprint: sloopBlueprint)
         
         self.zPosition = 0.5
         
@@ -77,7 +85,7 @@ class Catalina_142: Boat {
         // Called before each frame is rendered
         v_Tŵ = wind
         tillerPosition = tiller
-        mainSheetPosition = mainsheet
+        mainsheetPosition = mainsheet
         var timeSinceLastScene = currentTime - (lastSceneUpdateTime  ?? currentTime)
         if timeSinceLastScene > 0.100 { timeSinceLastScene = 0.0166 }
         lastSceneUpdateTime = currentTime
