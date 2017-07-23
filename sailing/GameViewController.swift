@@ -21,16 +21,22 @@ class GameViewController: UIViewController {
             // Load the SKScene from 'GameScene.sks'
             if let scene = SKScene(fileNamed: "GameScene") {
                 // Set the scale mode to scale to fit the window
+                print(scene)
                 scene.scaleMode = .aspectFill
-                
+                scene.camera = SKCameraNode()
+                scene.physicsWorld.contactDelegate = scene as! SKPhysicsContactDelegate
                 // Present the scene
+                //scene.didMove(to: view)
                 view.presentScene(scene)
+                //scene.didMove(to: view)
+                print("done")
             }
             
             view.ignoresSiblingOrder = true
             
             view.showsFPS = true
             view.showsNodeCount = true
+            //view.showsPhysics = true
         }
     }
 

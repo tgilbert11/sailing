@@ -13,14 +13,14 @@ class Catalina_14p2: Sloop {
     
     // input variables
     
-    var Δx_Bŵ = CGVector(dx: 0, dy: 0) // Δm/s, SHOULD BE PRIVATE
+    //var Δx_Bŵ = CGVector(dx: 0, dy: 0) // Δm/s, SHOULD BE PRIVATE
     var Δθ_bbŵ: CGFloat = 0 // Δradians
     
     private let boatHeadingChangePerTillerKtSecond: CGFloat = 0.25 // radians/([]*m/s*s)
     
     init() {
         
-        let boatBlueprint = BoatBlueprint(beam: 1.88, loa: 4.52, tillerLength: 1.2, tillerAspectRatio: 12, boatMass: 250, boatWaterContactArea: 7, hullCDForward: 0.005, hullCDLateral: 0.4, boatIbb: 500)
+        let boatBlueprint = BoatBlueprint(beam: 1.88*GameScene.m, loa: 4.52*GameScene.m, tillerLength: 1.2*GameScene.m, tillerAspectRatio: 12, boatMass: 250, boatWaterContactArea: 7*pow(GameScene.m,2), hullCDForward: 0.005, hullCDLateral: 0.4, boatIbb: 500)
         
         let CD_mainsail = {
             (α: CGFloat) -> CGFloat in
@@ -52,7 +52,7 @@ class Catalina_14p2: Sloop {
             }
         }
         
-        let catboatBlueprint = CatboatBlueprint(boatBlueprint: boatBlueprint, bowToMast: 1.52, boomLength: 2.59, mainsailArea: 6.81, mainsailHeight: 2.75, centerboardDepth: 0.4, mainsheetClosestHaul: 0.25, mainsailMaxAngle: 1.22, mainsailCD: CD_mainsail, mainsailCL: CL_mainsail)
+        let catboatBlueprint = CatboatBlueprint(boatBlueprint: boatBlueprint, bowToMast: 1.52*GameScene.m, boomLength: 2.59*GameScene.m, mainsailArea: 6.81*pow(GameScene.m,2), mainsailHeight: 2.75*GameScene.m, centerboardDepth: 0.4*GameScene.m, mainsheetClosestHaul: 0.25, mainsailMaxAngle: 1.22, mainsailCD: CD_mainsail, mainsailCL: CL_mainsail)
         
         let sloopBlueprint = SloopBlueprint(catboatBlueprint: catboatBlueprint)
         
@@ -77,31 +77,44 @@ class Catalina_14p2: Sloop {
      - Returns:
      change in boat position this update [m]
      */
-    public func moveBoat(atTime currentTime: TimeInterval, wind: CGVector, tillerPosition tiller: CGFloat, mainSheetPosition mainsheet: CGFloat) -> CGPoint {
+    public func moveBoat(atTime currentTime: TimeInterval, wind: CGVector, tillerPosition tiller: CGFloat, mainSheetPosition mainsheet: CGFloat) {
         v_Tŵ = wind
         tillerPosition = tiller
         mainsheetPosition = mainsheet
         var timeSinceLastScene = currentTime - (lastSceneUpdateTime  ?? currentTime)
         if timeSinceLastScene > 0.100 { timeSinceLastScene = 0.0166 }
         lastSceneUpdateTime = currentTime
+        print("Δtime:\(timeSinceLastScene)")
+        //Δx_Bŵ = v_Bŵ * CGFloat(timeSinceLastScene)
+        //x_Bŵ += CGPoint(x: Δx_Bŵ.dx, y: Δx_Bŵ.dy)
+//        print((FR+FLAT)/self.physicsBody!.mass*CGFloat(timeSinceLastScene))
+        if self.physicsBody!.isResting {
+             print("resting!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        }
+//        print(self.physicsBody!.mass)
+        print("force: \(F)", separator: "", terminator: "")
+        print("v now: \(self.physicsBody!.velocity)")
         
-        Δx_Bŵ = v_Bŵ * CGFloat(timeSinceLastScene)
-        x_Bŵ = x_Bŵ + Δx_Bŵ
-        v_Bŵ = v_Bŵ + (FR+FLAT)/M_boat*CGFloat(timeSinceLastScene)
+        
+        self.physicsBody!.applyForce(F/100)
+        //self.physicsBody!.applyForce(FR+FLAT)
+        //v_Bŵ = v_Bŵ + (FR+FLAT)/self.physicsBody!.mass*CGFloat(timeSinceLastScene)
+        
         
         Δθ_bbŵ = τ_bb / I_bb * CGFloat(timeSinceLastScene)
         θ_bbŵ = θ_bbŵ + Δθ_bbŵ
         if θ_bbŵ > CGFloat.pi/2 { θ_bbŵ = 0 }
         
-        let boatRotation = boatHeadingChangePerTillerKtSecond*tillerPosition*(v_Bŵ⋅B̂)*CGFloat(timeSinceLastScene)
-        v_Bŵ = v_Bŵ.rotatedBy(radians: boatRotation)
-        θ_Bŵ = θ_Bŵ + boatRotation
+        //let boatRotation = boatHeadingChangePerTillerKtSecond*tillerPosition*(v_Bŵ⋅B̂)*CGFloat(timeSinceLastScene)
+        //v_Bŵ = v_Bŵ.rotatedBy(radians: boatRotation)
+        //θ_Bŵ = θ_Bŵ + boatRotation
         
         self.mainsail?.zRotation = self.θ_sB̂ + CGFloat.pi // NEED TO MAKE ABSOLUTELY CORRECT
         self.mastTellTail?.zRotation = self.V_AB̂.θ + CGFloat.pi // NEED TO MAKE ABSOLUTELY CORRECT
         self.tiller?.zRotation = -self.tillerPosition*CGFloat.pi/3
         
-        return CGPoint(x: Δx_Bŵ.dx, y: Δx_Bŵ.dy)
+        print(statusString())
+//        print("v here: \(self.physicsBody!.velocity)")
     }
     
     
@@ -111,9 +124,10 @@ class Catalina_14p2: Sloop {
         var debugStrings = [String]()
         
         debugStrings.append(" v_Tŵ: \(v_Tŵ)")
-        debugStrings.append(" x_Bŵ: (\(x_Bŵ.dx), \(x_Bŵ.dy))")
+        debugStrings.append(" x_Bŵ: (\(x_Bŵ.x), \(x_Bŵ.y))")
         debugStrings.append(" θ_Bŵ: \(θ_Bŵ.rad2deg)")
         debugStrings.append(" v_Bŵ: \(v_Bŵ)")
+        debugStrings.append(" mass: \(physicsBody!.mass)")
         debugStrings.append(" V_Aŵ: \(V_Aŵ)")
         debugStrings.append(" V_AB̂: \(V_AB̂)")
         debugStrings.append(" θ_sB̂: \(θ_sB̂.rad2deg)")

@@ -52,7 +52,7 @@ class Catboat: Boat {
     var FLAT: CGVector { get { return Fh_sail + Fh_hull } } // N
     var F: CGVector { get { return FR + FLAT } } // N
     
-    var τ_bb: CGFloat { get { return Fh_hull.mag*c + Fh_sail.mag*h_mainsail - M_boat*g*b } } // Nm
+    var τ_bb: CGFloat { return Fh_hull.mag*c + Fh_sail.mag*h_mainsail - physicsBody!.mass*g*b } // Nm
     var b: CGFloat { get { return 0.4*sin(2.4*θ_bbŵ) } } // m
     
     var θ_sB̂: CGFloat { get {
@@ -96,6 +96,7 @@ class Catboat: Boat {
         self.mastTellTail?.position = self.mainsail!.position
         self.mastTellTail?.zPosition = 4
         self.addChild(self.mastTellTail!)
+        
         
     }
     

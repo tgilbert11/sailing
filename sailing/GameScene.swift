@@ -6,17 +6,23 @@
 //  Copyright © 2017 Taylor H. Gilbert. All rights reserved.
 //
 
+
+// minumum speed ~1.5
+// minimum force ~0.0006
+
 import SpriteKit
 import GameplayKit
 
 
-class GameScene: SKScene {
+class GameScene: SKScene, SKPhysicsContactDelegate {
+    
+    static let m = CGFloat(150)
     
     // Game Control
     private let rotateBoatNotView = true
     private let boat = Catalina_14p2()
     /// [m/s]
-    private var v_Tŵ = CGVector(dx: 0, dy: -6)
+    private var v_Tŵ = CGVector(dx: 0, dy: -6*GameScene.m)
     
     // simulation information
     /// [s]
@@ -25,11 +31,11 @@ class GameScene: SKScene {
     private var sceneWidth: CGFloat?
     /// [pixels]
     private var sceneHeight: CGFloat?
-    /// single-sided overlap in x and y of consecutive background tiles [pixels]
-    private var bgOverlap: CGFloat = 5
-    /// position of center of scene relative to real world [pixels]
+    /// single-sided overlap in x and y of consecutive background tiles [meters]
+    private var bgOverlap: CGFloat = 1
+    /// position of center of scene relative to real world [meters]
     private var sceneShift = CGPoint.zero
-    /// position of background center relative to world to follow scene center [pixels]
+    /// position of background center relative to world to follow scene center [meters]
     private var backgroundCenterRelativeToWorld = CGPoint.zero
     /// ratio of pixels per meter [pixels/m]
     private var pixelsPerMeter: CGFloat { get { return GameViewController.pixelsPerMeter } }
@@ -54,12 +60,14 @@ class GameScene: SKScene {
     /// latest commanded position of mainsheet from 0 (sheeted in) to 1 (sheeted out) []
     private var mainSheetPosition: CGFloat = 0
     
+    func didBegin(_ contact: SKPhysicsContact) {
+        print("contact!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    }
     
     // Initialization
     override func didMove(to view: SKView) {
-        
-        print(self.userData?.value(forKey: "ppm") as! CGFloat)
-        
+        print("did move")
+        //self.camera = self.childNode(withName: "//cameraNode") as? SKCameraNode
         self.windLabel = self.childNode(withName: "//windLabel") as? SKLabelNode
         self.speedLabel = self.childNode(withName: "//speedLabel") as? SKLabelNode
         self.leewardLabel = self.childNode(withName: "//leewardLabel") as? SKLabelNode
@@ -77,10 +85,16 @@ class GameScene: SKScene {
         
         createWater()
         
-        self.boat.position = CGPoint(x: 75, y: 0)
-        self.boat.xScale = self.pixelsPerMeter
-        self.boat.yScale = self.pixelsPerMeter
-        self.sceneShift = CGPoint(x: 5*GameViewController.pixelsPerMeter + 75, y: -5*GameViewController.pixelsPerMeter)
+        self.physicsWorld.speed = 0.001
+        
+        
+        //self.boat.position = CGPoint(x: 0, y: 0)
+        //let mass = self.boat.physicsBody!.mass
+        //self.boat.xScale = self.pixelsPerMeter
+        //self.boat.yScale = self.pixelsPerMeter
+        //self.boat.physicsBody!.mass = mass
+        self.sceneShift = CGPoint(x: 0, y: 0)
+        self.mainSheetPosition = 0.5
         self.addChild(boat)
         
         let objectsInWater = SKSpriteNode()
@@ -88,91 +102,91 @@ class GameScene: SKScene {
         self.addChild(objectsInWater)
         
         let leftStartBuoy = SKSpriteNode(imageNamed: "buoy orange no lines")
-        leftStartBuoy.position = CGPoint(x: 5*GameViewController.pixelsPerMeter, y: 10*GameViewController.pixelsPerMeter)
-        leftStartBuoy.size = CGSize(width: 0.3*GameViewController.pixelsPerMeter, height: 1.2*GameViewController.pixelsPerMeter)
+        leftStartBuoy.position = CGPoint(x: 5, y: 10)
+        leftStartBuoy.size = CGSize(width: 0.3, height: 1.2)
         leftStartBuoy.zPosition = 0.25
         objectsInWater.addChild(leftStartBuoy)
         
         let rightStartBuoy = SKSpriteNode(imageNamed: "buoy orange no lines")
-        rightStartBuoy.position = CGPoint(x: 15*GameViewController.pixelsPerMeter, y: 10*GameViewController.pixelsPerMeter)
-        rightStartBuoy.size = CGSize(width: 0.3*GameViewController.pixelsPerMeter, height: 1.2*GameViewController.pixelsPerMeter)
+        rightStartBuoy.position = CGPoint(x: 15, y: 10)
+        rightStartBuoy.size = CGSize(width: 0.3, height: 1.2)
         rightStartBuoy.zPosition = 0.25
         objectsInWater.addChild(rightStartBuoy)
         
         let startArrow = SKSpriteNode(imageNamed: "start")
-        startArrow.position = CGPoint(x: 8.33*GameViewController.pixelsPerMeter, y: 10*GameViewController.pixelsPerMeter)
-        startArrow.size = CGSize(width: 3*GameViewController.pixelsPerMeter, height: 6*GameViewController.pixelsPerMeter)
+        startArrow.position = CGPoint(x: 8.33, y: 10)
+        startArrow.size = CGSize(width: 3, height: 6)
         startArrow.alpha = 0.25
         objectsInWater.addChild(startArrow)
         
         let finishArrow = SKSpriteNode(imageNamed: "finish")
-        finishArrow.position = CGPoint(x: 11.66*GameViewController.pixelsPerMeter, y: 10*GameViewController.pixelsPerMeter)
-        finishArrow.size = CGSize(width: 3*GameViewController.pixelsPerMeter, height: 6*GameViewController.pixelsPerMeter)
+        finishArrow.position = CGPoint(x: 11.66, y: 10)
+        finishArrow.size = CGSize(width: 3, height: 6)
         finishArrow.zRotation = 0
         finishArrow.alpha = 0.25
         objectsInWater.addChild(finishArrow)
         
         let windwardMark = SKSpriteNode(imageNamed: "buoy orange no lines")
-        windwardMark.position = CGPoint(x: 10*GameViewController.pixelsPerMeter, y: 35*GameViewController.pixelsPerMeter)
-        windwardMark.size = CGSize(width: 0.3*GameViewController.pixelsPerMeter, height: 1.2*GameViewController.pixelsPerMeter)
+        windwardMark.position = CGPoint(x: 10, y: 35)
+        windwardMark.size = CGSize(width: 0.3, height: 1.2)
         windwardMark.zPosition = 0.25
         objectsInWater.addChild(windwardMark)
         
         let windwardApproachArrow = SKSpriteNode(imageNamed: "arrow blank up")
-        windwardApproachArrow.position = CGPoint(x: 13*GameViewController.pixelsPerMeter, y: 35*GameViewController.pixelsPerMeter)
-        windwardApproachArrow.size = CGSize(width: 3*GameViewController.pixelsPerMeter, height: 6*GameViewController.pixelsPerMeter)
+        windwardApproachArrow.position = CGPoint(x: 13, y: 35)
+        windwardApproachArrow.size = CGSize(width: 3, height: 6)
         windwardApproachArrow.zRotation = 0
         windwardApproachArrow.alpha = 0.25
         objectsInWater.addChild(windwardApproachArrow)
         
         let windwardDepartureArrow = SKSpriteNode(imageNamed: "arrow blank up")
-        windwardDepartureArrow.position = CGPoint(x: 7*GameViewController.pixelsPerMeter, y: 38*GameViewController.pixelsPerMeter)
-        windwardDepartureArrow.size = CGSize(width: 3*GameViewController.pixelsPerMeter, height: 6*GameViewController.pixelsPerMeter)
+        windwardDepartureArrow.position = CGPoint(x: 7, y: 38)
+        windwardDepartureArrow.size = CGSize(width: 3, height: 6)
         windwardDepartureArrow.zRotation = CGFloat.pi*3/4
         windwardDepartureArrow.alpha = 0.25
         objectsInWater.addChild(windwardDepartureArrow)
         
         let gybeMark = SKSpriteNode(imageNamed: "buoy orange no lines")
-        gybeMark.position = CGPoint(x: -15*GameViewController.pixelsPerMeter, y: 10*GameViewController.pixelsPerMeter)
-        gybeMark.size = CGSize(width: 0.3*GameViewController.pixelsPerMeter, height: 1.2*GameViewController.pixelsPerMeter)
+        gybeMark.position = CGPoint(x: -15, y: 10)
+        gybeMark.size = CGSize(width: 0.3, height: 1.2)
         gybeMark.zPosition = 0.25
         objectsInWater.addChild(gybeMark)
         
         let gybeApproachArrow = SKSpriteNode(imageNamed: "arrow blank up")
-        gybeApproachArrow.position = CGPoint(x: -18*GameViewController.pixelsPerMeter, y: 13*GameViewController.pixelsPerMeter)
-        gybeApproachArrow.size = CGSize(width: 3*GameViewController.pixelsPerMeter, height: 6*GameViewController.pixelsPerMeter)
+        gybeApproachArrow.position = CGPoint(x: -18, y: 13)
+        gybeApproachArrow.size = CGSize(width: 3, height: 6)
         gybeApproachArrow.zRotation = CGFloat.pi*3/4
         gybeApproachArrow.alpha = 0.25
         objectsInWater.addChild(gybeApproachArrow)
         
         let gybeDepartureArrow = SKSpriteNode(imageNamed: "arrow blank up")
-        gybeDepartureArrow.position = CGPoint(x: -18*GameViewController.pixelsPerMeter, y: 7*GameViewController.pixelsPerMeter)
-        gybeDepartureArrow.size = CGSize(width: 3*GameViewController.pixelsPerMeter, height: 6*GameViewController.pixelsPerMeter)
+        gybeDepartureArrow.position = CGPoint(x: -18, y: 7)
+        gybeDepartureArrow.size = CGSize(width: 3, height: 6)
         gybeDepartureArrow.zRotation = CGFloat.pi*5/4
         gybeDepartureArrow.alpha = 0.25
         objectsInWater.addChild(gybeDepartureArrow)
         
         let leewardMark = SKSpriteNode(imageNamed: "buoy orange no lines")
-        leewardMark.position = CGPoint(x: 10*GameViewController.pixelsPerMeter, y: -15*GameViewController.pixelsPerMeter)
-        leewardMark.size = CGSize(width: 0.3*GameViewController.pixelsPerMeter, height: 1.2*GameViewController.pixelsPerMeter)
+        leewardMark.position = CGPoint(x: 10, y: -15)
+        leewardMark.size = CGSize(width: 0.3, height: 1.2)
         leewardMark.zPosition = 0.25
         objectsInWater.addChild(leewardMark)
         
         let leewardApproachArrow = SKSpriteNode(imageNamed: "arrow blank up")
-        leewardApproachArrow.position = CGPoint(x: 7*GameViewController.pixelsPerMeter, y: -18*GameViewController.pixelsPerMeter)
-        leewardApproachArrow.size = CGSize(width: 3*GameViewController.pixelsPerMeter, height: 6*GameViewController.pixelsPerMeter)
+        leewardApproachArrow.position = CGPoint(x: 7, y: -18)
+        leewardApproachArrow.size = CGSize(width: 3, height: 6)
         leewardApproachArrow.zRotation = CGFloat.pi*5/4
         leewardApproachArrow.alpha = 0.25
         objectsInWater.addChild(leewardApproachArrow)
         
         let leewardDepartureArrow = SKSpriteNode(imageNamed: "arrow blank up")
-        leewardDepartureArrow.position = CGPoint(x: 13*GameViewController.pixelsPerMeter, y: -15*GameViewController.pixelsPerMeter)
-        leewardDepartureArrow.size = CGSize(width: 3*GameViewController.pixelsPerMeter, height: 6*GameViewController.pixelsPerMeter)
+        leewardDepartureArrow.position = CGPoint(x: 13, y: -15)
+        leewardDepartureArrow.size = CGSize(width: 3, height: 6)
         leewardDepartureArrow.zRotation = 0
         leewardDepartureArrow.alpha = 0.25
         objectsInWater.addChild(leewardDepartureArrow)
         
-        
+
     }
     
     // UI creation
@@ -194,8 +208,11 @@ class GameScene: SKScene {
     // Frame Updates
     override func update(_ currentTime: TimeInterval) {
         /// boat movement this update [m]
-        let boatMovement = boat.moveBoat(atTime: currentTime, wind: v_Tŵ, tillerPosition: tillerPosition, mainSheetPosition: mainSheetPosition)
-        sceneShift -= boatMovement*GameViewController.pixelsPerMeter
+        print("update ", separator: "", terminator: "\n")
+        boat.moveBoat(atTime: currentTime, wind: v_Tŵ, tillerPosition: tillerPosition, mainSheetPosition: mainSheetPosition)
+        //print(boat.physicsBody!.velocity)
+        //self.boat.position += boatMovement
+        //sceneShift -= boatMovement
         updateGraphics()
     }
     
@@ -210,43 +227,44 @@ class GameScene: SKScene {
             self.boat.zRotation = 0
         }
         
-        self.sternNode?.zRotation = -self.boat.θ_bbŵ
+//        self.sternNode?.zRotation = -self.boat.θ_bbŵ
+//
+//        let nf: NumberFormatter = {
+//            let temporaryFormatter = NumberFormatter()
+//            temporaryFormatter.maximumFractionDigits = 1
+//            temporaryFormatter.minimumFractionDigits = 1
+//            temporaryFormatter.maximumIntegerDigits = 3
+//            temporaryFormatter.minimumIntegerDigits = 3
+//            return temporaryFormatter
+//        }()
         
-        let nf: NumberFormatter = {
-            let temporaryFormatter = NumberFormatter()
-            temporaryFormatter.maximumFractionDigits = 1
-            temporaryFormatter.minimumFractionDigits = 1
-            temporaryFormatter.maximumIntegerDigits = 3
-            temporaryFormatter.minimumIntegerDigits = 3
-            return temporaryFormatter
-        }()
+//        self.speedLabel?.text = "\(nf.string(from: NSNumber.init(value: Double(self.boat.v_Bŵ.mag)*1.943))!) kts"
+//        self.leewardLabel?.text = "\(nf.string(from: NSNumber.init(value: Double((self.boat.v_Bŵ⋅v_Tŵ)/v_Tŵ.mag)*1.943))!) kts"
+//        self.frLabel?.text = "FR: \(nf.string(from: NSNumber.init(value: Double(self.boat.FR⋅self.boat.B̂)))!)"
+//        self.frlLabel?.text = "F.θ: \(nf.string(from: NSNumber.init(value: Double(self.boat.F.θ.rad2deg)))!)"
+//        self.aaLabel?.text = "α: \(nf.string(from: NSNumber.init(value: Double(self.boat.α.rad2deg)))!)"
+//        self.heelLabel?.text = "θ_bbŵ: \(nf.string(from: NSNumber.init(value: Double(self.boat.θ_bbŵ.rad2deg)))!)"
+//        self.fhLabel?.text = "\(nf.string(from: NSNumber.init(value: Double(self.boat.Fh_sail.mag)))!)"
+//        self.lLabel?.text = "\(nf.string(from: NSNumber.init(value: Double(self.boat.L_mainsailŵ.mag)))!)"
+//        self.dLabel?.text = "\(nf.string(from: NSNumber.init(value: Double(self.boat.D_mainsailŵ.mag)))!)"
+//
+//
+//        while self.sceneShift.x < self.backgroundCenterRelativeToWorld.x - self.sceneWidth! { self.backgroundCenterRelativeToWorld.x -= self.sceneWidth! }
+//        while self.sceneShift.x > self.backgroundCenterRelativeToWorld.x + self.sceneWidth! { self.backgroundCenterRelativeToWorld.x += self.sceneWidth! }
+//        while self.sceneShift.y < self.backgroundCenterRelativeToWorld.y - self.sceneHeight! { self.backgroundCenterRelativeToWorld.y -= self.sceneHeight! }
+//        while self.sceneShift.y > self.backgroundCenterRelativeToWorld.y + self.sceneHeight! { self.backgroundCenterRelativeToWorld.y += self.sceneHeight! }
         
-        self.speedLabel?.text = "\(nf.string(from: NSNumber.init(value: Double(self.boat.v_Bŵ.mag)*1.943))!) kts"
-        self.leewardLabel?.text = "\(nf.string(from: NSNumber.init(value: Double((self.boat.v_Bŵ⋅v_Tŵ)/v_Tŵ.mag)*1.943))!) kts"
-        self.frLabel?.text = "FR: \(nf.string(from: NSNumber.init(value: Double(self.boat.FR⋅self.boat.B̂)))!)"
-        self.frlLabel?.text = "F.θ: \(nf.string(from: NSNumber.init(value: Double(self.boat.F.θ.rad2deg)))!)"
-        self.aaLabel?.text = "α: \(nf.string(from: NSNumber.init(value: Double(self.boat.α.rad2deg)))!)"
-        self.heelLabel?.text = "θ_bbŵ: \(nf.string(from: NSNumber.init(value: Double(self.boat.θ_bbŵ.rad2deg)))!)"
-        self.fhLabel?.text = "\(nf.string(from: NSNumber.init(value: Double(self.boat.Fh_sail.mag)))!)"
-        self.lLabel?.text = "\(nf.string(from: NSNumber.init(value: Double(self.boat.L_mainsailŵ.mag)))!)"
-        self.dLabel?.text = "\(nf.string(from: NSNumber.init(value: Double(self.boat.D_mainsailŵ.mag)))!)"
-        
-        
-        while self.sceneShift.x < self.backgroundCenterRelativeToWorld.x - self.sceneWidth! { self.backgroundCenterRelativeToWorld.x -= self.sceneWidth! }
-        while self.sceneShift.x > self.backgroundCenterRelativeToWorld.x + self.sceneWidth! { self.backgroundCenterRelativeToWorld.x += self.sceneWidth! }
-        while self.sceneShift.y < self.backgroundCenterRelativeToWorld.y - self.sceneHeight! { self.backgroundCenterRelativeToWorld.y -= self.sceneHeight! }
-        while self.sceneShift.y > self.backgroundCenterRelativeToWorld.y + self.sceneHeight! { self.backgroundCenterRelativeToWorld.y += self.sceneHeight! }
-        
-        self.enumerateChildNodes(withName: "water", using: ({
-            (node, error) in
-            node.position.x = self.sceneShift.x - self.backgroundCenterRelativeToWorld.x
-            node.position.y = self.sceneShift.y - self.backgroundCenterRelativeToWorld.y
-        }))
-        self.enumerateChildNodes(withName: "objectsInWater", using: ({
-            (node, error) in
-            node.position.x = self.sceneShift.x
-            node.position.y = self.sceneShift.y
-        }))
+//        self.enumerateChildNodes(withName: "water", using: ({
+//            (node, error) in
+//            node.position.x = self.sceneShift.x - self.backgroundCenterRelativeToWorld.x
+//            node.position.y = self.sceneShift.y - self.backgroundCenterRelativeToWorld.y
+//        }))
+//        self.enumerateChildNodes(withName: "objectsInWater", using: ({
+//            (node, error) in
+//            node.position.x = self.sceneShift.x
+//            node.position.y = self.sceneShift.y
+//        }))
+//        print("frame update complete")
     }
     
     // touch helper methods.  Do I need all of these?
@@ -277,16 +295,4 @@ class GameScene: SKScene {
     }
 }
 
-extension CGPoint {
-    static func * (left: CGPoint, right: CGFloat) -> CGPoint {
-        return CGPoint(x: left.x*right, y: left.y*right)
-    }
-    static func += (left: inout CGPoint, right: CGPoint) {
-        left.x += right.x
-        left.y += right.y
-    }
-    static func -= (left: inout CGPoint, right: CGPoint) {
-        left.x -= right.x
-        left.y -= right.y
-    }
-}
+

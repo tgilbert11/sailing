@@ -16,25 +16,27 @@ infix operator ⊙ : MultiplicationPrecedence
 
 
 class Boat: SKSpriteNode {
+    
     // global constants
-    let g: CGFloat = 9.806 // m/s2
-    let ρ_air: CGFloat = 1.225 // kg/m3
-    let ρ_water: CGFloat = 1000 // kg/m3
+    let g: CGFloat = 9.806*GameScene.m // m/s2
+    let ρ_air: CGFloat = 1.225/pow(GameScene.m,3) // kg/m3
+    let ρ_water: CGFloat = 1000/pow(GameScene.m,3) // kg/m3
     
     // constants
     let beam: CGFloat // m
     let loa: CGFloat // m
     let tillerLength: CGFloat // m
     let tillerAspectRatio: CGFloat // []
-    let M_boat: CGFloat // kg
+    //let M_boat: CGFloat // kg
     let S_boat: CGFloat // m2
     let CD_hull_R: CGFloat // [], 0.011 by lookup
     let CD_hull_LAT: CGFloat // []
     let I_bb: CGFloat // kg*m2, NEED TO REFINE
     
     // variables
-    var x_Bŵ = CGVector(dx: 0, dy: 0) // m
-    var v_Bŵ = CGVector(dx: 0, dy: 0) // m/s
+    var x_Bŵ: CGPoint { get { return self.position } set { self.position = newValue } } // m
+    //var v_Bŵ = CGVector.zero // m/s
+    var v_Bŵ: CGVector { get { return self.physicsBody!.velocity } set { self.physicsBody!.velocity = newValue; print("v updated to \(newValue)") }} // m/s
     var θ_Bŵ: CGFloat = 0 // radians
     var θ_bbŵ: CGFloat = 0 // radians
     var tillerPosition: CGFloat = 0 // [], [-1,1]
@@ -52,13 +54,28 @@ class Boat: SKSpriteNode {
         self.loa = blueprint.loa
         self.tillerLength = blueprint.tillerLength
         self.tillerAspectRatio = blueprint.tillerAspectRatio
-        self.M_boat = blueprint.boatMass
+        //self.M_boat = blueprint.boatMass
         self.S_boat = blueprint.boatWaterContactArea
         self.CD_hull_R = blueprint.hullCDForward
         self.CD_hull_LAT = blueprint.hullCDLateral
         self.I_bb = blueprint.boatIbb
         
         super.init(texture: SKTexture(imageNamed: "boat flat transom"), color: .clear, size: CGSize(width: beam, height: loa))
+        self.name = "boat"
+        self.physicsBody = SKPhysicsBody(rectangleOf: self.size)
+        self.physicsBody!.mass = blueprint.boatMass
+        self.physicsBody?.linearDamping = CGFloat(0)
+        self.physicsBody?.angularDamping = CGFloat(0)
+        self.physicsBody?.friction = 0
+        //print("allows rotation: \(self.physicsBody!.allowsRotation)")
+        //self.physicsBody?.allowsRotation = true
+        print("is dynamic: \(self.physicsBody!.isDynamic)")
+        //print("affectedByGravity: \(self.physicsBody!.affectedByGravity)")
+        self.physicsBody?.affectedByGravity = false
+        //print("description: \(self.physicsBody!.description)")
+        //print("debug description: \(self.physicsBody!.debugDescription)")
+        //print(self.physicsBody!.mass)
+        //print(self.physicsBody!.velocity)
         
         self.tiller = SKSpriteNode(imageNamed: "rudder")
         self.tiller?.size = CGSize(width: self.tillerLength/self.tillerAspectRatio, height: self.tillerLength)
@@ -66,6 +83,7 @@ class Boat: SKSpriteNode {
         self.tiller?.position = CGPoint(x: 0, y: -0.5*self.loa)
         self.tiller?.zPosition = 1
         self.addChild(tiller!)
+        
         
     }
     
@@ -99,7 +117,7 @@ extension CGVector: CustomStringConvertible {
     public var description: String {
         let nf = NumberFormatter()
         nf.minimumFractionDigits = 2
-        nf.maximumFractionDigits = 2
+        nf.maximumFractionDigits = 10
         nf.minimumIntegerDigits = 3
         nf.string(from: NSNumber(value: Double(self.mag)))
         return "(mag: \(nf.string(from: NSNumber(value: Double(self.mag)))!), θ: \(nf.string(from: NSNumber(value: Double(self.θ.rad2deg)))!))"
@@ -145,4 +163,18 @@ struct BoatBlueprint {
     let hullCDForward: CGFloat // []
     let hullCDLateral: CGFloat // []
     let boatIbb: CGFloat // kg*m2
+}
+
+extension CGPoint {
+    static func * (left: CGPoint, right: CGFloat) -> CGPoint {
+        return CGPoint(x: left.x*right, y: left.y*right)
+    }
+    static func += (left: inout CGPoint, right: CGPoint) {
+        left.x += right.x
+        left.y += right.y
+    }
+    static func -= (left: inout CGPoint, right: CGPoint) {
+        left.x -= right.x
+        left.y -= right.y
+    }
 }
