@@ -14,7 +14,6 @@ import GameplayKit
 infix operator ⋅ : MultiplicationPrecedence
 infix operator ⊙ : MultiplicationPrecedence
 
-
 class Boat: SKSpriteNode {
     // global constants
     let g: CGFloat = 9.806 // m/s2
@@ -24,19 +23,24 @@ class Boat: SKSpriteNode {
     // constants
     let beam: CGFloat // m
     let loa: CGFloat // m
+    let bowToCG: CGFloat // m
     let tillerLength: CGFloat // m
-    let tillerAspectRatio: CGFloat // []
+    let rudderExtension: CGFloat // m
+    let rudderDepth: CGFloat // m
     let M_boat: CGFloat // kg
+    let I_boat: SCNVector3 // 1/Nms
     let S_boat: CGFloat // m2
     let CD_hull_R: CGFloat // [], 0.011 by lookup
     let CD_hull_LAT: CGFloat // []
     let I_bb: CGFloat // kg*m2, NEED TO REFINE
     
     // variables
-    var x_Bŵ = CGVector(dx: 0, dy: 0) // m
+    var x_Bŵ: CGPoint { get { return self.position } set { self.position = newValue } }
     var v_Bŵ = CGVector(dx: 0, dy: 0) // m/s
     var θ_Bŵ: CGFloat = 0 // radians
     var θ_bbŵ: CGFloat = 0 // radians
+    var ω_Bŵ: CGFloat = 0 // radians/s
+    var ω_bbŵ: CGFloat = 0 // radians/s
     var tillerPosition: CGFloat = 0 // [], [-1,1]
     
     // UI nodes
@@ -50,19 +54,22 @@ class Boat: SKSpriteNode {
         
         self.beam = blueprint.beam
         self.loa = blueprint.loa
+        self.bowToCG = blueprint.bowToCG
         self.tillerLength = blueprint.tillerLength
-        self.tillerAspectRatio = blueprint.tillerAspectRatio
+        self.rudderExtension = blueprint.rudderExtension
+        self.rudderDepth = blueprint.rudderDepth
         self.M_boat = blueprint.boatMass
         self.S_boat = blueprint.boatWaterContactArea
         self.CD_hull_R = blueprint.hullCDForward
         self.CD_hull_LAT = blueprint.hullCDLateral
         self.I_bb = blueprint.boatIbb
+        self.I_boat = blueprint.boatI
         
         super.init(texture: SKTexture(imageNamed: "boat flat transom"), color: .clear, size: CGSize(width: beam, height: loa))
         
         self.tiller = SKSpriteNode(imageNamed: "rudder")
-        self.tiller?.size = CGSize(width: self.tillerLength/self.tillerAspectRatio, height: self.tillerLength)
-        self.tiller?.anchorPoint = CGPoint(x: 0.5, y: 0.5)
+        self.tiller?.size = CGSize(width: 0.1, height: self.tillerLength+self.rudderExtension)
+        self.tiller?.anchorPoint = CGPoint(x: 0.5, y: self.rudderExtension/(self.rudderExtension+self.tillerLength))
         self.tiller?.position = CGPoint(x: 0, y: -0.5*self.loa)
         self.tiller?.zPosition = 1
         self.addChild(tiller!)
@@ -72,7 +79,56 @@ class Boat: SKSpriteNode {
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
+    
+    func applyBoatEffect(effect: BoatEffect, duration: TimeInterval) {
+        // add effects of boat (centerboard, hull, rudder)
         
+        
+        // update the boat's velocity, angular torque, etc
+        x_Bŵ += CGPoint(x: v_Bŵ.dx*CGFloat(duration), y: v_Bŵ.dy*CGFloat(duration))
+        v_Bŵ += CGVector(dx: CGFloat(effect.force.x)/M_boat*CGFloat(duration), dy: CGFloat(effect.force.y)/M_boat*CGFloat(duration))
+        
+        θ_Bŵ += ω_Bŵ*CGFloat(duration)
+        ω_Bŵ += CGFloat(effect.torque.z)/CGFloat(I_boat.z)*CGFloat(duration)
+        
+        θ_bbŵ += ω_bbŵ*CGFloat(duration)
+        ω_bbŵ += CGFloat(effect.torque.x)/CGFloat(I_boat.x)*CGFloat(duration)
+    }
+        
+}
+
+struct BoatBlueprint {
+    let beam: CGFloat // m
+    let loa: CGFloat // m
+    let bowToCG: CGFloat // m
+    let tillerLength: CGFloat // m
+    let rudderExtension: CGFloat // m
+    let rudderDepth: CGFloat // m
+    let boatMass: CGFloat // kg
+    let boatWaterContactArea: CGFloat // m2
+    let hullCDForward: CGFloat // []
+    let hullCDLateral: CGFloat // []
+    let boatIbb: CGFloat // kg*m2
+    let boatI: SCNVector3 // kg*m2?
+}
+
+struct BoatEffect {
+    var force: SCNVector3
+    var torque: SCNVector3
+    static func + (left: BoatEffect, right: BoatEffect) -> BoatEffect {
+        return BoatEffect(force: left.force+right.force, torque: left.torque+right.torque)
+    }
+    static func - (left: BoatEffect, right: BoatEffect) -> BoatEffect {
+        return BoatEffect(force: left.force-right.force, torque: left.torque-right.torque)
+    }
+    static func += (left: inout BoatEffect, right: BoatEffect) {
+        left.force += right.force
+        left.torque += right.torque
+    }
+    static func -= (left: inout BoatEffect, right: BoatEffect) {
+        left.force -= right.force
+        left.torque -= right.torque
+    }
 }
 
 
@@ -114,6 +170,14 @@ extension CGVector: CustomStringConvertible {
     static func + (left: CGVector, right: CGVector) -> CGVector {
         return CGVector(dx: left.dx+right.dx, dy: left.dy+right.dy)
     }
+    static func += (left: inout CGVector, right: CGVector) {
+        left.dx += right.dx
+        left.dy += right.dy
+    }
+    static func -= (left: inout CGVector, right: CGVector) {
+        left.dx -= right.dx
+        left.dy -= right.dy
+    }
     static func - (left: CGVector, right: CGVector) -> CGVector {
         return CGVector(dx: left.dx-right.dx, dy: left.dy-right.dy)
     }
@@ -135,14 +199,41 @@ extension CGVector: CustomStringConvertible {
     
 }
 
-struct BoatBlueprint {
-    let beam: CGFloat // m
-    let loa: CGFloat // m
-    let tillerLength: CGFloat // m
-    let tillerAspectRatio: CGFloat // []
-    let boatMass: CGFloat // kg
-    let boatWaterContactArea: CGFloat // m2
-    let hullCDForward: CGFloat // []
-    let hullCDLateral: CGFloat // []
-    let boatIbb: CGFloat // kg*m2
+extension CGPoint {
+    static func * (left: CGPoint, right: CGFloat) -> CGPoint {
+        return CGPoint(x: left.x*right, y: left.y*right)
+    }
+    static func + (left: CGPoint, right: CGPoint) -> CGPoint {
+        return CGPoint(x: left.x+right.x, y: left.y+right.y)
+    }
+    static func - (left: CGPoint, right: CGPoint) -> CGPoint {
+        return CGPoint(x: left.x-right.x, y: left.y-right.y)
+    }
+    static func += (left: inout CGPoint, right: CGPoint) {
+        left.x += right.x
+        left.y += right.y
+    }
+    static func -= (left: inout CGPoint, right: CGPoint) {
+        left.x -= right.x
+        left.y -= right.y
+    }
+}
+
+extension SCNVector3 {
+    static func + (left: SCNVector3, right: SCNVector3) -> SCNVector3 {
+        return SCNVector3(left.x+right.x, left.y+right.y, left.z+right.z)
+    }
+    static func - (left: SCNVector3, right: SCNVector3) -> SCNVector3 {
+        return SCNVector3(left.x-right.x, left.y-right.y, left.z-right.z)
+    }
+    static func += (left: inout SCNVector3, right: SCNVector3) {
+        left.x += right.x
+        left.y += right.y
+        left.z += right.z
+    }
+    static func -= (left: inout SCNVector3, right: SCNVector3) {
+        left.x -= right.x
+        left.y -= right.y
+        left.z -= right.z
+    }
 }

@@ -13,14 +13,14 @@ class Catalina_14p2: Sloop {
     
     // input variables
     
-    var Δx_Bŵ = CGVector(dx: 0, dy: 0) // Δm/s, SHOULD BE PRIVATE
+    var Δx_Bŵ = CGPoint.zero // Δm/s, SHOULD BE PRIVATE
     var Δθ_bbŵ: CGFloat = 0 // Δradians
     
     private let boatHeadingChangePerTillerKtSecond: CGFloat = 0.25 // radians/([]*m/s*s)
     
     init() {
         
-        let boatBlueprint = BoatBlueprint(beam: 1.88, loa: 4.52, tillerLength: 1.2, tillerAspectRatio: 12, boatMass: 250, boatWaterContactArea: 7, hullCDForward: 0.005, hullCDLateral: 0.4, boatIbb: 500)
+        let boatBlueprint = BoatBlueprint(beam: 1.88, loa: 4.52, bowToCG: 2.26, tillerLength: 1.2, rudderExtension: 0.33, rudderDepth: 0.85, boatMass: 250, boatWaterContactArea: 7, hullCDForward: 0.005, hullCDLateral: 0.4, boatIbb: 500, boatI: SCNVector3(500,500,500))
         
         let CD_mainsail = {
             (α: CGFloat) -> CGFloat in
@@ -52,7 +52,7 @@ class Catalina_14p2: Sloop {
             }
         }
         
-        let catboatBlueprint = CatboatBlueprint(boatBlueprint: boatBlueprint, bowToMast: 1.52, boomLength: 2.59, mainsailArea: 6.81, mainsailHeight: 2.75, centerboardDepth: 0.4, mainsheetClosestHaul: 0.25, mainsailMaxAngle: 1.22, mainsailCD: CD_mainsail, mainsailCL: CL_mainsail)
+        let catboatBlueprint = CatboatBlueprint(boatBlueprint: boatBlueprint, bowToMast: 1.52, boomLength: 2.59, mainsailArea: 6.81, mainsailHeight: 2.75, centerboardDepth: 1.07, mainsheetClosestHaul: 0.25, mainsailMaxAngle: 1.22, mainsailCD: CD_mainsail, mainsailCL: CL_mainsail)
         
         let sloopBlueprint = SloopBlueprint(catboatBlueprint: catboatBlueprint)
         
@@ -85,7 +85,7 @@ class Catalina_14p2: Sloop {
         if timeSinceLastScene > 0.100 { timeSinceLastScene = 0.0166 }
         lastSceneUpdateTime = currentTime
         
-        Δx_Bŵ = v_Bŵ * CGFloat(timeSinceLastScene)
+        Δx_Bŵ = CGPoint(x: v_Bŵ.dx*CGFloat(timeSinceLastScene), y: v_Bŵ.dy*CGFloat(timeSinceLastScene))
         x_Bŵ = x_Bŵ + Δx_Bŵ
         v_Bŵ = v_Bŵ + (FR+FLAT)/M_boat*CGFloat(timeSinceLastScene)
         
@@ -101,7 +101,7 @@ class Catalina_14p2: Sloop {
         self.mastTellTail?.zRotation = self.V_AB̂.θ + CGFloat.pi // NEED TO MAKE ABSOLUTELY CORRECT
         self.tiller?.zRotation = -self.tillerPosition*CGFloat.pi/3
         
-        return CGPoint(x: Δx_Bŵ.dx, y: Δx_Bŵ.dy)
+        return CGPoint(x: Δx_Bŵ.x, y: Δx_Bŵ.y)
     }
     
     
@@ -111,7 +111,7 @@ class Catalina_14p2: Sloop {
         var debugStrings = [String]()
         
         debugStrings.append(" v_Tŵ: \(v_Tŵ)")
-        debugStrings.append(" x_Bŵ: (\(x_Bŵ.dx), \(x_Bŵ.dy))")
+        debugStrings.append(" x_Bŵ: (\(x_Bŵ.x), \(x_Bŵ.y))")
         debugStrings.append(" θ_Bŵ: \(θ_Bŵ.rad2deg)")
         debugStrings.append(" v_Bŵ: \(v_Bŵ)")
         debugStrings.append(" V_Aŵ: \(V_Aŵ)")

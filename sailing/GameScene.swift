@@ -277,16 +277,4 @@ class GameScene: SKScene {
     }
 }
 
-extension CGPoint {
-    static func * (left: CGPoint, right: CGFloat) -> CGPoint {
-        return CGPoint(x: left.x*right, y: left.y*right)
-    }
-    static func += (left: inout CGPoint, right: CGPoint) {
-        left.x += right.x
-        left.y += right.y
-    }
-    static func -= (left: inout CGPoint, right: CGPoint) {
-        left.x -= right.x
-        left.y -= right.y
-    }
-}
+
