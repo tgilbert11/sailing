@@ -34,7 +34,6 @@ class Catboat: Boat {
     var v_Tŵ = CGVector.zero
     var θ_lB̂: CGFloat { get { return CGFloat.pi/2 + (V_AB̂.θ < CGFloat.pi ? CGFloat.pi : 0) } }
     var θ_lŵ: CGFloat { get { return θ_lB̂ + θ_Bŵ } } // radians
-    var B̂: CGVector { get { return CGVector.init(normalWithAngle: θ_Bŵ) } } // []
     var l̂: CGVector { get { return CGVector.init(normalWithAngle: θ_lŵ) } } // []
     var V_Aŵ: CGVector { get { return v_Tŵ - v_Bŵ } } // m/s
     var V_AB̂: CGVector { get { return V_Aŵ.rotatedBy(radians: -θ_Bŵ) } } // m/s

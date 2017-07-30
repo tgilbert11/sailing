@@ -195,7 +195,8 @@ class GameScene: SKScene {
     override func update(_ currentTime: TimeInterval) {
         /// boat movement this update [m]
         let boatMovement = boat.moveBoat(atTime: currentTime, wind: v_Tŵ, tillerPosition: tillerPosition, mainSheetPosition: mainSheetPosition)
-        sceneShift -= boatMovement*GameViewController.pixelsPerMeter
+        print(boat.statusString())
+        //sceneShift -= boatMovement*GameViewController.pixelsPerMeter
         updateGraphics()
     }
     

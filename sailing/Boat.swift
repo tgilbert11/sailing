@@ -11,8 +11,8 @@ import SpriteKit
 import GameplayKit
 
 
-infix operator ⋅ : MultiplicationPrecedence
-infix operator ⊙ : MultiplicationPrecedence
+infix operator ⋅ : MultiplicationPrecedence // dot product
+infix operator ⊙ : MultiplicationPrecedence // projection
 
 class Boat: SKSpriteNode {
     // global constants
@@ -28,19 +28,21 @@ class Boat: SKSpriteNode {
     let rudderExtension: CGFloat // m
     let rudderDepth: CGFloat // m
     let M_boat: CGFloat // kg
-    let I_boat: SCNVector3 // 1/Nms
+    let I_boat: CGVector3 // 1/Nms
     let S_boat: CGFloat // m2
     let CD_hull_R: CGFloat // [], 0.011 by lookup
     let CD_hull_LAT: CGFloat // []
     let I_bb: CGFloat // kg*m2, NEED TO REFINE
     
     // variables
-    var x_Bŵ: CGPoint { get { return self.position } set { self.position = newValue } }
-    var v_Bŵ = CGVector(dx: 0, dy: 0) // m/s
-    var θ_Bŵ: CGFloat = 0 // radians
-    var θ_bbŵ: CGFloat = 0 // radians
-    var ω_Bŵ: CGFloat = 0 // radians/s
-    var ω_bbŵ: CGFloat = 0 // radians/s
+    var x_Bŵ: CGVector3 = CGVector3.zero { didSet { self.position = CGPoint(x: self.x_Bŵ.x, y: self.x_Bŵ.y) } }
+    var θ_Bŵ: CGVector3 = CGVector3.zero
+    var v_Bŵ: CGVector3 = CGVector3.zero // m/s
+    var ω_Bŵ: CGVector3 = CGVector3.zero
+    //var θ_Bŵ: CGFloat = 0 // radians
+    //var θ_bbŵ: CGFloat = 0 // radians
+    //var ω_Bŵ: CGFloat = 0 // radians/s
+    //var ω_bbŵ: CGFloat = 0 // radians/s
     var tillerPosition: CGFloat = 0 // [], [-1,1]
     
     // UI nodes
@@ -48,6 +50,9 @@ class Boat: SKSpriteNode {
     
     // Simulation
     var lastSceneUpdateTime: TimeInterval? = 0
+    
+    // Computations
+    var B̂: CGVector { get { return CGVector.init(normalWithAngle: θ_Bŵ.z) } } // []
     
     
     init(blueprint: BoatBlueprint) {
@@ -82,11 +87,11 @@ class Boat: SKSpriteNode {
     
     func applyBoatEffect(effect: BoatEffect, duration: TimeInterval) {
         // add effects of boat (centerboard, hull, rudder)
-        
+        let F_drag = 0.5 * ρ_water * (v_Bŵ⋅B̂) * abs(v_Bŵ⋅B̂) * S_boat * CD_hull_R
         
         // update the boat's velocity, angular torque, etc
-        x_Bŵ += CGPoint(x: v_Bŵ.dx*CGFloat(duration), y: v_Bŵ.dy*CGFloat(duration))
-        v_Bŵ += CGVector(dx: CGFloat(effect.force.x)/M_boat*CGFloat(duration), dy: CGFloat(effect.force.y)/M_boat*CGFloat(duration))
+        x_Bŵ += CGVector3(x: v_Bŵ.dx*CGFloat(duration), y: v_Bŵ.dy*CGFloat(duration), z: 0)
+        v_Bŵ += CGVector(dx: CGFloat(effect.force.x)/M_boat*CGFloat(duration), dy: CGFloat(-effect.force.y)/M_boat*CGFloat(duration))
         
         θ_Bŵ += ω_Bŵ*CGFloat(duration)
         ω_Bŵ += CGFloat(effect.torque.z)/CGFloat(I_boat.z)*CGFloat(duration)
@@ -109,12 +114,12 @@ struct BoatBlueprint {
     let hullCDForward: CGFloat // []
     let hullCDLateral: CGFloat // []
     let boatIbb: CGFloat // kg*m2
-    let boatI: SCNVector3 // kg*m2?
+    let boatI: CGVector3 // kg*m2?
 }
 
 struct BoatEffect {
-    var force: SCNVector3
-    var torque: SCNVector3
+    var force: CGVector3
+    var torque: CGVector3
     static func + (left: BoatEffect, right: BoatEffect) -> BoatEffect {
         return BoatEffect(force: left.force+right.force, torque: left.torque+right.torque)
     }
@@ -219,21 +224,27 @@ extension CGPoint {
     }
 }
 
-extension SCNVector3 {
-    static func + (left: SCNVector3, right: SCNVector3) -> SCNVector3 {
-        return SCNVector3(left.x+right.x, left.y+right.y, left.z+right.z)
+struct CGVector3 {
+    var x: CGFloat
+    var y: CGFloat
+    var z: CGFloat
+    static let zero: CGVector3 = CGVector3(x: 0, y: 0, z: 0)
+    
+    static func + (left: CGVector3, right: CGVector3) -> CGVector3 {
+        return CGVector3(x: left.x+right.x, y: left.y+right.y, z: left.z+right.z)
     }
-    static func - (left: SCNVector3, right: SCNVector3) -> SCNVector3 {
-        return SCNVector3(left.x-right.x, left.y-right.y, left.z-right.z)
+    static func - (left: CGVector3, right: CGVector3) -> CGVector3 {
+        return CGVector3(x: left.x-right.x, y: left.y-right.y, z: left.z-right.z)
     }
-    static func += (left: inout SCNVector3, right: SCNVector3) {
+    static func += (left: inout CGVector3, right: CGVector3) {
         left.x += right.x
         left.y += right.y
         left.z += right.z
     }
-    static func -= (left: inout SCNVector3, right: SCNVector3) {
+    static func -= (left: inout CGVector3, right: CGVector3) {
         left.x -= right.x
         left.y -= right.y
         left.z -= right.z
     }
+
 }

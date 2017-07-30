@@ -20,7 +20,7 @@ class Catalina_14p2: Sloop {
     
     init() {
         
-        let boatBlueprint = BoatBlueprint(beam: 1.88, loa: 4.52, bowToCG: 2.26, tillerLength: 1.2, rudderExtension: 0.33, rudderDepth: 0.85, boatMass: 250, boatWaterContactArea: 7, hullCDForward: 0.005, hullCDLateral: 0.4, boatIbb: 500, boatI: SCNVector3(500,500,500))
+        let boatBlueprint = BoatBlueprint(beam: 1.88, loa: 4.52, bowToCG: 2.26, tillerLength: 1.2, rudderExtension: 0.33, rudderDepth: 0.85, boatMass: 250, boatWaterContactArea: 7, hullCDForward: 0.005, hullCDLateral: 0.4, boatIbb: 500, boatI: CGVector3(x: 500, y: 500, z: 500))
         
         let CD_mainsail = {
             (α: CGFloat) -> CGFloat in
@@ -85,17 +85,23 @@ class Catalina_14p2: Sloop {
         if timeSinceLastScene > 0.100 { timeSinceLastScene = 0.0166 }
         lastSceneUpdateTime = currentTime
         
-        Δx_Bŵ = CGPoint(x: v_Bŵ.dx*CGFloat(timeSinceLastScene), y: v_Bŵ.dy*CGFloat(timeSinceLastScene))
-        x_Bŵ = x_Bŵ + Δx_Bŵ
-        v_Bŵ = v_Bŵ + (FR+FLAT)/M_boat*CGFloat(timeSinceLastScene)
+        let force = CGVector3(x: FR.mag, y: FLAT.mag, z: 0)
+        let torque = CGVector3(x: τ_bb, y: 0, z: Δθ_bbŵ)
         
-        Δθ_bbŵ = τ_bb / I_bb * CGFloat(timeSinceLastScene)
-        θ_bbŵ = θ_bbŵ + Δθ_bbŵ
-        if θ_bbŵ > CGFloat.pi/2 { θ_bbŵ = 0 }
+        let effect = BoatEffect(force: force, torque: torque)
+        applyBoatEffect(effect: effect, duration: timeSinceLastScene)
         
-        let boatRotation = boatHeadingChangePerTillerKtSecond*tillerPosition*(v_Bŵ⋅B̂)*CGFloat(timeSinceLastScene)
-        v_Bŵ = v_Bŵ.rotatedBy(radians: boatRotation)
-        θ_Bŵ = θ_Bŵ + boatRotation
+        //Δx_Bŵ = CGPoint(x: v_Bŵ.dx*CGFloat(timeSinceLastScene), y: v_Bŵ.dy*CGFloat(timeSinceLastScene))
+        //x_Bŵ = x_Bŵ + Δx_Bŵ
+        //v_Bŵ = v_Bŵ + (FR+FLAT)/M_boat*CGFloat(timeSinceLastScene)
+        
+        //Δθ_bbŵ = τ_bb / I_bb * CGFloat(timeSinceLastScene)
+        //θ_bbŵ = θ_bbŵ + Δθ_bbŵ
+        if θ_bbŵ > CGFloat.pi/2 { θ_bbŵ = 0; ω_bbŵ = 0 }
+        
+        //let boatRotation = boatHeadingChangePerTillerKtSecond*tillerPosition*(v_Bŵ⋅B̂)*CGFloat(timeSinceLastScene)
+        //v_Bŵ = v_Bŵ.rotatedBy(radians: boatRotation)
+        //θ_Bŵ = θ_Bŵ + boatRotation
         
         self.mainsail?.zRotation = self.θ_sB̂ + CGFloat.pi // NEED TO MAKE ABSOLUTELY CORRECT
         self.mastTellTail?.zRotation = self.V_AB̂.θ + CGFloat.pi // NEED TO MAKE ABSOLUTELY CORRECT
