@@ -28,16 +28,15 @@ class Boat: SKSpriteNode {
     let rudderExtension: CGFloat // m
     let rudderDepth: CGFloat // m
     let M_boat: CGFloat // kg
-    let I_boat: CGVector3 // 1/Nms
     let S_boat: CGFloat // m2
     let CD_hull_R: CGFloat // [], 0.011 by lookup
     let CD_hull_LAT: CGFloat // []
-    let I_bb: CGFloat // kg*m2, NEED TO REFINE
+    let I_boat: CGVector3 // 1/Nms
     
     // variables
     var x_Bŵ: CGVector3 = CGVector3.zero { didSet { self.position = CGPoint(x: self.x_Bŵ.x, y: self.x_Bŵ.y) } }
-    var θ_Bŵ: CGVector3 = CGVector3.zero
     var v_Bŵ: CGVector3 = CGVector3.zero // m/s
+    var θ_Bŵ: CGVector3 = CGVector3.zero
     var ω_Bŵ: CGVector3 = CGVector3.zero
     //var θ_Bŵ: CGFloat = 0 // radians
     //var θ_bbŵ: CGFloat = 0 // radians
@@ -67,7 +66,6 @@ class Boat: SKSpriteNode {
         self.S_boat = blueprint.boatWaterContactArea
         self.CD_hull_R = blueprint.hullCDForward
         self.CD_hull_LAT = blueprint.hullCDLateral
-        self.I_bb = blueprint.boatIbb
         self.I_boat = blueprint.boatI
         
         super.init(texture: SKTexture(imageNamed: "boat flat transom"), color: .clear, size: CGSize(width: beam, height: loa))
@@ -87,17 +85,14 @@ class Boat: SKSpriteNode {
     
     func applyBoatEffect(effect: BoatEffect, duration: TimeInterval) {
         // add effects of boat (centerboard, hull, rudder)
-        let F_drag = 0.5 * ρ_water * (v_Bŵ⋅B̂) * abs(v_Bŵ⋅B̂) * S_boat * CD_hull_R
+        //let F_drag = 0.5 * ρ_water * (v_Bŵ⋅B̂) * abs(v_Bŵ⋅B̂) * S_boat * CD_hull_R
         
         // update the boat's velocity, angular torque, etc
-        x_Bŵ += CGVector3(x: v_Bŵ.dx*CGFloat(duration), y: v_Bŵ.dy*CGFloat(duration), z: 0)
-        v_Bŵ += CGVector(dx: CGFloat(effect.force.x)/M_boat*CGFloat(duration), dy: CGFloat(-effect.force.y)/M_boat*CGFloat(duration))
+        x_Bŵ += CGVector3(x: v_Bŵ.x*CGFloat(duration), y: v_Bŵ.y*CGFloat(duration), z: 0)
+        v_Bŵ += CGVector3(x: CGFloat(effect.force.x)/M_boat*CGFloat(duration), y: CGFloat(-effect.force.y)/M_boat*CGFloat(duration), z: 0)
         
         θ_Bŵ += ω_Bŵ*CGFloat(duration)
-        ω_Bŵ += CGFloat(effect.torque.z)/CGFloat(I_boat.z)*CGFloat(duration)
-        
-        θ_bbŵ += ω_bbŵ*CGFloat(duration)
-        ω_bbŵ += CGFloat(effect.torque.x)/CGFloat(I_boat.x)*CGFloat(duration)
+        ω_Bŵ += effect.torque/I_boat*CGFloat(duration)
     }
         
 }
@@ -113,7 +108,6 @@ struct BoatBlueprint {
     let boatWaterContactArea: CGFloat // m2
     let hullCDForward: CGFloat // []
     let hullCDLateral: CGFloat // []
-    let boatIbb: CGFloat // kg*m2
     let boatI: CGVector3 // kg*m2?
 }
 
@@ -228,6 +222,11 @@ struct CGVector3 {
     var x: CGFloat
     var y: CGFloat
     var z: CGFloat
+    var θx: CGFloat { return CGFloat(atan2(self.z, self.y)).normalizedAngle() } // y toward z
+    var θy: CGFloat { return CGFloat(atan2(self.x, self.z)).normalizedAngle() } // z toward x
+    var θz: CGFloat { return CGFloat(atan2(self.y, self.x)).normalizedAngle() } // x toward y
+    var mag: CGFloat { return pow(self.mag2, 1/2) }
+    var mag2: CGFloat { return pow(x, 2) + pow(y, 2) + pow(z, 2) }
     static let zero: CGVector3 = CGVector3(x: 0, y: 0, z: 0)
     
     static func + (left: CGVector3, right: CGVector3) -> CGVector3 {
@@ -245,6 +244,25 @@ struct CGVector3 {
         left.x -= right.x
         left.y -= right.y
         left.z -= right.z
+    }
+    static func * (left: CGVector3, right: CGFloat) -> CGVector3 {
+        return CGVector3(x: left.x*right, y: left.y*right, z: left.z*right)
+    }
+    static func * (left: CGFloat, right: CGVector3) -> CGVector3 {
+        return right*left
+    }
+    static func / (left: CGVector3, right: CGVector3) -> CGVector3 {
+        return CGVector3(x: left.x/right.x, y: left.y/right.y, z: left.z/right.z)
+    }
+    static func / (left: CGVector3, right: CGFloat) -> CGVector3 {
+        return CGVector3(x: left.x/right, y: left.y/right, z: left.z/right)
+    }
+    static func ⋅ (left: CGVector3, right: CGVector3) -> CGFloat {
+        return left.x*right.x + left.y*right.y + left.z*right.z
+    }
+    
+    func rotatedInZBy(θ: CGFloat) -> CGVector3 {
+        return CGVector3(x: self.x*cos(θ) - self.y*sin(θ), y: self.x*sin(θ) + self.y*cos(θ), z: self.z)
     }
 
 }

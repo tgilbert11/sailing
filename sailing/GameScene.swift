@@ -16,7 +16,7 @@ class GameScene: SKScene {
     private let rotateBoatNotView = true
     private let boat = Catalina_14p2()
     /// [m/s]
-    private var v_Tŵ = CGVector(dx: 0, dy: -6)
+    private var v_Tŵ = CGVector3(x: 0, y: -6, z: 0)
     
     // simulation information
     /// [s]
@@ -194,7 +194,7 @@ class GameScene: SKScene {
     // Frame Updates
     override func update(_ currentTime: TimeInterval) {
         /// boat movement this update [m]
-        let boatMovement = boat.moveBoat(atTime: currentTime, wind: v_Tŵ, tillerPosition: tillerPosition, mainSheetPosition: mainSheetPosition)
+        boat.moveBoat(atTime: currentTime, wind: v_Tŵ, tillerPosition: tillerPosition, mainSheetPosition: mainSheetPosition)
         print(boat.statusString())
         //sceneShift -= boatMovement*GameViewController.pixelsPerMeter
         updateGraphics()
@@ -203,15 +203,15 @@ class GameScene: SKScene {
     // UI updates
     func updateGraphics() {
         if rotateBoatNotView {
-            self.windLabel?.zRotation = v_Tŵ.θ
-            self.boat.zRotation = self.boat.θ_Bŵ - CGFloat.pi/2 // NEED TO MAKE ABSOLUTELY CORRECT
+            self.windLabel?.zRotation = v_Tŵ.θz
+            self.boat.zRotation = self.boat.x_Bŵ.θz - CGFloat.pi/2 // NEED TO MAKE ABSOLUTELY CORRECT
         }
         else {
-            self.windLabel?.zRotation = -self.boat.θ_Bŵ+v_Tŵ.θ+CGFloat.pi/2
+            self.windLabel?.zRotation = -self.boat.x_Bŵ.θz+v_Tŵ.θz+CGFloat.pi/2
             self.boat.zRotation = 0
         }
         
-        self.sternNode?.zRotation = -self.boat.θ_bbŵ
+        self.sternNode?.zRotation = -self.boat.x_Bŵ.θx
         
         let nf: NumberFormatter = {
             let temporaryFormatter = NumberFormatter()
@@ -224,13 +224,13 @@ class GameScene: SKScene {
         
         self.speedLabel?.text = "\(nf.string(from: NSNumber.init(value: Double(self.boat.v_Bŵ.mag)*1.943))!) kts"
         self.leewardLabel?.text = "\(nf.string(from: NSNumber.init(value: Double((self.boat.v_Bŵ⋅v_Tŵ)/v_Tŵ.mag)*1.943))!) kts"
-        self.frLabel?.text = "FR: \(nf.string(from: NSNumber.init(value: Double(self.boat.FR⋅self.boat.B̂)))!)"
-        self.frlLabel?.text = "F.θ: \(nf.string(from: NSNumber.init(value: Double(self.boat.F.θ.rad2deg)))!)"
+        self.frLabel?.text = "FR: \(nf.string(from: NSNumber.init(value: Double(0)))!)"
+        self.frlLabel?.text = "F.θ: \(nf.string(from: NSNumber.init(value: Double(self.boat.F_mainsail.θz.rad2deg)))!)"
         self.aaLabel?.text = "α: \(nf.string(from: NSNumber.init(value: Double(self.boat.α.rad2deg)))!)"
-        self.heelLabel?.text = "θ_bbŵ: \(nf.string(from: NSNumber.init(value: Double(self.boat.θ_bbŵ.rad2deg)))!)"
-        self.fhLabel?.text = "\(nf.string(from: NSNumber.init(value: Double(self.boat.Fh_sail.mag)))!)"
-        self.lLabel?.text = "\(nf.string(from: NSNumber.init(value: Double(self.boat.L_mainsailŵ.mag)))!)"
-        self.dLabel?.text = "\(nf.string(from: NSNumber.init(value: Double(self.boat.D_mainsailŵ.mag)))!)"
+        self.heelLabel?.text = "θ_bbŵ: \(nf.string(from: NSNumber.init(value: Double(self.boat.x_Bŵ.θx.rad2deg)))!)"
+        self.fhLabel?.text = "\(nf.string(from: NSNumber.init(value: Double(0)))!)"
+        self.lLabel?.text = "\(nf.string(from: NSNumber.init(value: Double(0)))!)"
+        self.dLabel?.text = "\(nf.string(from: NSNumber.init(value: Double(0)))!)"
         
         
         while self.sceneShift.x < self.backgroundCenterRelativeToWorld.x - self.sceneWidth! { self.backgroundCenterRelativeToWorld.x -= self.sceneWidth! }
