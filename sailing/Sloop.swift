@@ -18,6 +18,10 @@ class Sloop: Catboat {
         fatalError("init(coder:) has not been implemented")
     }
     
+    override func applyBoatEffect(effect: BoatEffect, duration: TimeInterval) {
+        super.applyBoatEffect(effect: effect, duration: duration)
+    }
+    
 }
 
 struct SloopBlueprint {

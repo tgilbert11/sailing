@@ -73,17 +73,12 @@ class Catalina_14p2: Sloop {
      - Returns:
      change in boat position this update [m]
      */
-    public func moveBoat(atTime currentTime: TimeInterval, wind: CGVector3, tillerPosition tiller: CGFloat, mainSheetPosition mainsheet: CGFloat) {
+    public func moveBoat(afterTime elapsedTime: TimeInterval, wind: CGVector3, tillerPosition tiller: CGFloat, mainSheetPosition mainsheet: CGFloat) {
         v_Tŵ = wind
         tillerPosition = tiller
         mainsheetPosition = mainsheet
-        var timeSinceLastScene = currentTime - (lastSceneUpdateTime  ?? currentTime)
-        if timeSinceLastScene > 0.100 { timeSinceLastScene = 0.0166 }
-        lastSceneUpdateTime = currentTime
         
-        
-        let effect = BoatEffect(force: CGVector3.zero, torque: CGVector3.zero)
-        self.applyBoatEffect(effect: effect, duration: timeSinceLastScene)
+        self.applyBoatEffect(effect: BoatEffect(force: CGVector3.zero, torque: CGVector3.zero), duration: elapsedTime)
         
         //Δx_Bŵ = CGPoint(x: v_Bŵ.dx*CGFloat(timeSinceLastScene), y: v_Bŵ.dy*CGFloat(timeSinceLastScene))
         //x_Bŵ = x_Bŵ + Δx_Bŵ
@@ -110,12 +105,12 @@ class Catalina_14p2: Sloop {
         
         debugStrings.append(" v_Tŵ: \(v_Tŵ)")
         debugStrings.append(" x_Bŵ: (\(x_Bŵ.x), \(x_Bŵ.y))")
-        debugStrings.append(" θ_Bŵ: \(θ_Bŵ.z.rad2deg)")
+        debugStrings.append("x_Bŵ.θz: \(x_Bŵ.θz.rad2deg)")
         debugStrings.append(" v_Bŵ: \(v_Bŵ)")
 //        debugStrings.append(" V_Aŵ: \(V_Aŵ)")
 //        debugStrings.append(" V_AB̂: \(V_AB̂)")
         debugStrings.append(" θ_sB̂: \(θ_sB̂.rad2deg)")
-        debugStrings.append("    B̂: \(B̂)")
+//u        debugStrings.append("    B̂: \(B̂)")
 //        debugStrings.append("    l̂: \(l̂)")
         debugStrings.append("    α: \(α.rad2deg)")
         debugStrings.append(" CL_m: \(CL_mainsail)")
@@ -126,8 +121,7 @@ class Catalina_14p2: Sloop {
 //        debugStrings.append("  D_h: \(D_hullŵ)")
 //        debugStrings.append("   FR: \(FR)")
 //        debugStrings.append(" FLAT: \(FLAT)")
-//        debugStrings.append("    F: \(F)")
-//        debugStrings.append(" Fh_s: \(Fh_sail)")
+        debugStrings.append("    F: \(F_mainsail)")
 //        debugStrings.append(" Fh_h: \(Fh_hull)")
 //        debugStrings.append(" τ_bb: \(τ_bb)")
 //        debugStrings.append("    b: \(b)")

@@ -34,14 +34,10 @@ class Boat: SKSpriteNode {
     let I_boat: CGVector3 // 1/Nms
     
     // variables
-    var x_Bŵ: CGVector3 = CGVector3.zero { didSet { self.position = CGPoint(x: self.x_Bŵ.x, y: self.x_Bŵ.y) } }
+    var x_Bŵ: CGVector3 = CGVector3.zero { didSet { self.position = CGPoint(x: self.x_Bŵ.x*GameViewController.pixelsPerMeter, y: self.x_Bŵ.y*GameViewController.pixelsPerMeter) } }
     var v_Bŵ: CGVector3 = CGVector3.zero // m/s
     var θ_Bŵ: CGVector3 = CGVector3.zero
     var ω_Bŵ: CGVector3 = CGVector3.zero
-    //var θ_Bŵ: CGFloat = 0 // radians
-    //var θ_bbŵ: CGFloat = 0 // radians
-    //var ω_Bŵ: CGFloat = 0 // radians/s
-    //var ω_bbŵ: CGFloat = 0 // radians/s
     var tillerPosition: CGFloat = 0 // [], [-1,1]
     
     // UI nodes
@@ -51,7 +47,7 @@ class Boat: SKSpriteNode {
     var lastSceneUpdateTime: TimeInterval? = 0
     
     // Computations
-    var B̂: CGVector { get { return CGVector.init(normalWithAngle: θ_Bŵ.z) } } // []
+    //var B̂: CGVector { get { return CGVector.init(normalWithAngle: θ_Bŵ.z) } } // []
     
     
     init(blueprint: BoatBlueprint) {
@@ -68,12 +64,12 @@ class Boat: SKSpriteNode {
         self.CD_hull_LAT = blueprint.hullCDLateral
         self.I_boat = blueprint.boatI
         
-        super.init(texture: SKTexture(imageNamed: "boat flat transom"), color: .clear, size: CGSize(width: beam, height: loa))
+        super.init(texture: SKTexture(imageNamed: "catalinaHullTop2"), color: .clear, size: CGSize(width: loa, height: beam))
         
-        self.tiller = SKSpriteNode(imageNamed: "rudder")
-        self.tiller?.size = CGSize(width: 0.1, height: self.tillerLength+self.rudderExtension)
-        self.tiller?.anchorPoint = CGPoint(x: 0.5, y: self.rudderExtension/(self.rudderExtension+self.tillerLength))
-        self.tiller?.position = CGPoint(x: 0, y: -0.5*self.loa)
+        self.tiller = SKSpriteNode(imageNamed: "rudderRight2")
+        self.tiller?.size = CGSize(width: self.tillerLength+self.rudderExtension, height: 0.1)
+        self.tiller?.anchorPoint = CGPoint(x: self.rudderExtension, y: 0.5)
+        self.tiller?.position = CGPoint(x: -0.5*self.loa, y: 0)
         self.tiller?.zPosition = 1
         self.addChild(tiller!)
         
@@ -85,14 +81,26 @@ class Boat: SKSpriteNode {
     
     func applyBoatEffect(effect: BoatEffect, duration: TimeInterval) {
         // add effects of boat (centerboard, hull, rudder)
-        //let F_drag = 0.5 * ρ_water * (v_Bŵ⋅B̂) * abs(v_Bŵ⋅B̂) * S_boat * CD_hull_R
+        let D_LAT_mag = 0.5 * ρ_water * S_boat * CD_hull_LAT * pow(v_Bŵ.mag*sin(v_Bŵ.θz-θ_Bŵ.z),2)
+        let θ_D_LATŵ = θ_Bŵ.z + (sin(v_Bŵ.θz-θ_Bŵ.z)>0 ? -1 : 1)*CGFloat.pi/2
+        
+        let D_R_mag = 0.5 * ρ_water * S_boat * CD_hull_R * pow(v_Bŵ.mag*cos(v_Bŵ.θz-θ_Bŵ.z),2)
+        let θ_D_Rŵ = θ_Bŵ.z + (cos(v_Bŵ.θz-θ_Bŵ.z) > 0 ? 1 : 0) * CGFloat.pi
+        
+        let fullEffect = effect + BoatEffect(force: CGVector3(x: D_LAT_mag*cos(θ_D_LATŵ) + D_R_mag*cos(θ_D_Rŵ), y: D_LAT_mag*sin(θ_D_LATŵ) + D_R_mag*sin(θ_D_Rŵ), z: 0), torque: CGVector3.zero)
         
         // update the boat's velocity, angular torque, etc
-        x_Bŵ += CGVector3(x: v_Bŵ.x*CGFloat(duration), y: v_Bŵ.y*CGFloat(duration), z: 0)
-        v_Bŵ += CGVector3(x: CGFloat(effect.force.x)/M_boat*CGFloat(duration), y: CGFloat(-effect.force.y)/M_boat*CGFloat(duration), z: 0)
+        x_Bŵ += v_Bŵ*CGFloat(duration)
+        v_Bŵ += fullEffect.force/M_boat*CGFloat(duration)
         
-        θ_Bŵ += ω_Bŵ*CGFloat(duration)
-        ω_Bŵ += effect.torque/I_boat*CGFloat(duration)
+        //CGVector3(x: CGFloat(effect.force.x)/M_boat*CGFloat(duration), y: CGFloat(-effect.force.y)/M_boat*CGFloat(duration), z: 0)
+        
+        print("    τ: \(effect.torque)")
+        
+        //θ_Bŵ += ω_Bŵ*CGFloat(duration)
+        //ω_Bŵ += effect.torque/I_boat*CGFloat(duration)
+        
+        self.tiller?.zRotation = self.tillerPosition*CGFloat.pi/3
     }
         
 }

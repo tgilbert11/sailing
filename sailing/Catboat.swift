@@ -33,12 +33,12 @@ class Catboat: Boat {
     // computations
     var v_Tŵ = CGVector3.zero
     var v_Aŵ: CGVector3 { return v_Tŵ - v_Bŵ } // m/s
-    var v_AB̂: CGVector3 { return v_Aŵ.rotatedInZBy(θ: -x_Bŵ.θz) } // m/s
+    var v_AB̂: CGVector3 { return v_Aŵ.rotatedInZBy(θ: -θ_Bŵ.z) } // m/s
     var sailout: CGFloat { return mainsheetClosestHaul + (mainsailMaxAngle-mainsheetClosestHaul)*mainsheetPosition } // radians
     var α: CGFloat { return abs(v_AB̂.θz - CGFloat.pi) > sailout ? ( CGFloat.pi - v_AB̂.θz + (v_AB̂.θz > CGFloat.pi ? 1 : -1) * sailout) : 0 } // radians
     var θ_sB̂: CGFloat { return v_AB̂.θz + α }
     var Lŵ_θz: CGFloat { return v_Aŵ.θz + (α < 0 ? 1 : -1)*CGFloat.pi/2 } // radians
-    var L_mag: CGFloat { return 0.5 * ρ_air * A_mainsail * cos(x_Bŵ.θx) * CL_mainsail(abs(α)) * v_Aŵ.mag2 }
+    var L_mag: CGFloat { return 0.5 * ρ_air * A_mainsail * cos(θ_Bŵ.x) * CL_mainsail(abs(α)) * v_Aŵ.mag2 }
     var D_mag: CGFloat { return 0.5 * ρ_air * A_mainsail * CD_mainsail(abs(α)) * v_Aŵ.mag2 }
     var F_mainsail: CGVector3 { return CGVector3(x: L_mag*cos(Lŵ_θz) + D_mag*cos(v_Aŵ.θz), y: L_mag*sin(Lŵ_θz) + D_mag*sin(v_Aŵ.θz), z: 0) }
  
@@ -61,10 +61,10 @@ class Catboat: Boat {
         
         super.init(blueprint: blueprint.boatBlueprint)
         
-        self.mainsail = SKSpriteNode(imageNamed: "sail top boom")
-        self.mainsail?.size = CGSize(width: boomLength/mainsailAspectRatio, height: boomLength)
-        self.mainsail?.anchorPoint = CGPoint(x: 0.5, y: 1-1/mainsailAspectRatio/2)
-        self.mainsail?.position = CGPoint(x: 0, y: (0.5*self.loa - self.bowToMast))
+        self.mainsail = SKSpriteNode(imageNamed: "boom")
+        self.mainsail?.size = CGSize(width: boomLength, height: boomLength/mainsailAspectRatio)
+        self.mainsail?.anchorPoint = CGPoint(x: 1-1/mainsailAspectRatio/2, y: 0.5)
+        self.mainsail?.position = CGPoint(x: (0.5*self.loa - self.bowToMast), y: 0)
         self.mainsail?.zPosition = 3
         self.addChild(self.mainsail!)
         
@@ -78,6 +78,11 @@ class Catboat: Boat {
     }
     
     override func applyBoatEffect(effect: BoatEffect, duration: TimeInterval) {
+        print("L_mag: \(L_mag)")
+        print("L_ang: \(Lŵ_θz)")
+        print("D_mag: \(D_mag)")
+        print("D_ang: \(v_Aŵ.θz)")
+        print("abs(v_AB.tz - pi): \(abs(v_AB̂.θz - CGFloat.pi))")
         super.applyBoatEffect(effect: effect + BoatEffect(force: F_mainsail, torque: CGVector3.zero), duration: duration)
     }
     
@@ -91,7 +96,7 @@ struct CatboatBlueprint {
     let boatBlueprint: BoatBlueprint
     let bowToMast: CGFloat // m
     let boomLength: CGFloat // m
-    let mainsailAspectRatio: CGFloat = 13.5 // []
+    let mainsailAspectRatio: CGFloat = 20 // []
     let mainsailArea: CGFloat // m2
     let mainsailHeight: CGFloat // m, height of force application on mainsail
     let centerboardDepth: CGFloat // m, depth of force application below CG

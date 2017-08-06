@@ -20,7 +20,7 @@ class GameScene: SKScene {
     
     // simulation information
     /// [s]
-    private var lastSceneUpdateTime: TimeInterval = 0
+    private var lastSceneUpdateTime: TimeInterval?
     /// [pixels]
     private var sceneWidth: CGFloat?
     /// [pixels]
@@ -77,7 +77,7 @@ class GameScene: SKScene {
         
         createWater()
         
-        self.boat.position = CGPoint(x: 75, y: 0)
+        //self.boat.position = CGPoint(x: 75, y: 0)
         self.boat.xScale = self.pixelsPerMeter
         self.boat.yScale = self.pixelsPerMeter
         self.sceneShift = CGPoint(x: 5*GameViewController.pixelsPerMeter + 75, y: -5*GameViewController.pixelsPerMeter)
@@ -194,9 +194,16 @@ class GameScene: SKScene {
     // Frame Updates
     override func update(_ currentTime: TimeInterval) {
         /// boat movement this update [m]
-        boat.moveBoat(atTime: currentTime, wind: v_Tŵ, tillerPosition: tillerPosition, mainSheetPosition: mainSheetPosition)
+
+        var timeSinceLastScene = currentTime - (lastSceneUpdateTime  ?? currentTime)
+        if timeSinceLastScene > 0.100 { timeSinceLastScene = 0.0166 }
+        lastSceneUpdateTime = currentTime
+        
+        boat.moveBoat(afterTime: timeSinceLastScene, wind: v_Tŵ, tillerPosition: tillerPosition, mainSheetPosition: mainSheetPosition)
         print(boat.statusString())
+        
         //sceneShift -= boatMovement*GameViewController.pixelsPerMeter
+        
         updateGraphics()
     }
     
@@ -204,7 +211,7 @@ class GameScene: SKScene {
     func updateGraphics() {
         if rotateBoatNotView {
             self.windLabel?.zRotation = v_Tŵ.θz
-            self.boat.zRotation = self.boat.x_Bŵ.θz - CGFloat.pi/2 // NEED TO MAKE ABSOLUTELY CORRECT
+            self.boat.zRotation = self.boat.θ_Bŵ.z 
         }
         else {
             self.windLabel?.zRotation = -self.boat.x_Bŵ.θz+v_Tŵ.θz+CGFloat.pi/2
