@@ -16,7 +16,7 @@ class Catalina_14p2: Sloop {
     
     init() {
         
-        let boatBlueprint = BoatBlueprint(beam: 1.88, loa: 4.52, bowToCG: 2.26, tillerLength: 1.2, rudderExtension: 0.33, rudderDepth: 0.85, boatMass: 250, boatWaterContactArea: 7, hullCDForward: 0.005, hullCDLateral: 0.4, boatI: CGVector3(x: 500, y: 500, z: 500))
+        let boatBlueprint = BoatBlueprint(beam: 1.88, loa: 4.52, bowToCG: 2.26, tillerLength: 1.2, rudderExtension: 0.33, rudderDepth: 0.85, boatMass: 250, boatWaterContactArea: 7, hullCDForward: 0.005, hullCDLateral: 0.4, boatI: CGVector3(x: 500, y: 500, z: 750))
         
         let CD_mainsail = {
             (α: CGFloat) -> CGFloat in

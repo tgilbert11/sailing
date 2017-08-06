@@ -21,7 +21,6 @@
 		B57060A71F36870700A2399B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B5DCDEF91F3682CE00E6D185 /* Assets.xcassets */; };
 		B57BE9361F172A8B0037257A /* Catalina_14p2.swift in Sources */ = {isa = PBXBuildFile; fileRef = B57BE9351F172A8B0037257A /* Catalina_14p2.swift */; };
 		B591C6BB1F0DEE7F0050FD04 /* Boat.swift in Sources */ = {isa = PBXBuildFile; fileRef = B591C6BA1F0DEE7F0050FD04 /* Boat.swift */; };
-		B5F2323C1F0C92D300569D1E /* stern view.png in Resources */ = {isa = PBXBuildFile; fileRef = B5F2323B1F0C92D300569D1E /* stern view.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -62,7 +61,6 @@
 		B57BE9351F172A8B0037257A /* Catalina_14p2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Catalina_14p2.swift; sourceTree = "<group>"; };
 		B591C6BA1F0DEE7F0050FD04 /* Boat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Boat.swift; sourceTree = "<group>"; };
 		B5DCDEF91F3682CE00E6D185 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		B5F2323B1F0C92D300569D1E /* stern view.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "stern view.png"; path = "../../../../Desktop/stern view.png"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -124,7 +122,6 @@
 				B522BFDB1EFF69E800448D25 /* GameViewController.swift */,
 				B522BFDD1EFF69E800448D25 /* Main.storyboard */,
 				B5DCDEF91F3682CE00E6D185 /* Assets.xcassets */,
-				B5F2323B1F0C92D300569D1E /* stern view.png */,
 				B522BFE21EFF69E800448D25 /* LaunchScreen.storyboard */,
 				B522BFE51EFF69E800448D25 /* Info.plist */,
 			);
@@ -253,7 +250,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B5F2323C1F0C92D300569D1E /* stern view.png in Resources */,
 				B522BFDF1EFF69E800448D25 /* Main.storyboard in Resources */,
 				B522BFD61EFF69E800448D25 /* GameScene.sks in Resources */,
 				B522BFE41EFF69E800448D25 /* LaunchScreen.storyboard in Resources */,

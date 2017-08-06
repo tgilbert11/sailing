@@ -68,9 +68,9 @@ class Catboat: Boat {
         self.mainsail?.zPosition = 3
         self.addChild(self.mainsail!)
         
-        self.mastTellTail = SKSpriteNode(imageNamed: "mast tell tail")
-        self.mastTellTail?.size = CGSize(width: 0.08, height: 1.5)
-        self.mastTellTail?.anchorPoint = CGPoint(x: 0.5, y: 0.95)
+        self.mastTellTail = SKSpriteNode(imageNamed: "mastTellTail")
+        self.mastTellTail?.size = CGSize(width: 1, height: 0.1)
+        self.mastTellTail?.anchorPoint = CGPoint(x: 0.95, y: 0.5)
         self.mastTellTail?.position = self.mainsail!.position
         self.mastTellTail?.zPosition = 4
         self.addChild(self.mastTellTail!)
