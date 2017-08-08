@@ -58,7 +58,7 @@
 		B522BFFB1EFF69E900448D25 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B54531BE1F17224F0083DF5F /* Catboat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Catboat.swift; sourceTree = "<group>"; };
 		B54531C01F1727DD0083DF5F /* Sloop.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sloop.swift; sourceTree = "<group>"; };
-		B56955B81F108CF800CC0EFC /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Assets.xcassets; path = ../../../../.Trash/Assets.xcassets; sourceTree = "<group>"; };
+		B56955B81F108CF800CC0EFC /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B57BE9351F172A8B0037257A /* Catalina_14p2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Catalina_14p2.swift; sourceTree = "<group>"; };
 		B591C6BA1F0DEE7F0050FD04 /* Boat.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Boat.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
