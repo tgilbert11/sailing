@@ -10,10 +10,7 @@ import SpriteKit
 import GameplayKit
 
 class Catalina_14p2: Sloop {
-    
-    
-    private let boatHeadingChangePerTillerKtSecond: CGFloat = 0.25 // radians/([]*m/s*s)
-    
+        
     init() {
         
         let boatBlueprint = BoatBlueprint(beam: 1.88, loa: 4.52, bowToCG: 2.26, tillerLength: 1.2, rudderExtension: 0.33, rudderDepth: 0.85, boatMass: 250, boatWaterContactArea: 7, hullCDForward: 0.005, hullCDLateral: 0.4, boatI: CGVector3(x: 500, y: 500, z: 750))
@@ -80,18 +77,6 @@ class Catalina_14p2: Sloop {
         
         self.applyBoatEffect(effect: BoatEffect(force: CGVector3.zero, torque: CGVector3.zero), duration: elapsedTime)
         
-        //Δx_Bŵ = CGPoint(x: v_Bŵ.dx*CGFloat(timeSinceLastScene), y: v_Bŵ.dy*CGFloat(timeSinceLastScene))
-        //x_Bŵ = x_Bŵ + Δx_Bŵ
-        //v_Bŵ = v_Bŵ + (FR+FLAT)/M_oboat*CGFloat(timeSinceLastScene)
-        
-        //Δθ_bbŵ = τ_bb / I_bb * CGFloat(timeSinceLastScene)
-        //θ_bbŵ = θ_bbŵ + Δθ_bbŵ
-        //if θ_bbŵ > CGFloat.pi/2 { θ_bbŵ = 0; ω_bbŵ = 0 }
-        
-        //let boatRotation = boatHeadingChangePerTillerKtSecond*tillerPosition*(v_Bŵ⋅B̂)*CGFloat(timeSinceLastScene)
-        //v_Bŵ = v_Bŵ.rotatedBy(radians: boatRotation)
-        //θ_Bŵ = θ_Bŵ + boatRotation
-        
         self.mainsail?.zRotation = self.θ_sB̂ + CGFloat.pi // NEED TO MAKE ABSOLUTELY CORRECT
         self.mastTellTail?.zRotation = v_AB̂.θz + CGFloat.pi // NEED TO MAKE ABSOLUTELY CORRECT
         self.tiller?.zRotation = -self.tillerPosition*CGFloat.pi/3
@@ -107,24 +92,11 @@ class Catalina_14p2: Sloop {
         debugStrings.append(" x_Bŵ: (\(x_Bŵ.x), \(x_Bŵ.y))")
         debugStrings.append("x_Bŵ.θz: \(x_Bŵ.θz.rad2deg)")
         debugStrings.append(" v_Bŵ: \(v_Bŵ)")
-//        debugStrings.append(" V_Aŵ: \(V_Aŵ)")
-//        debugStrings.append(" V_AB̂: \(V_AB̂)")
         debugStrings.append(" θ_sB̂: \(θ_sB̂.rad2deg)")
-//u        debugStrings.append("    B̂: \(B̂)")
-//        debugStrings.append("    l̂: \(l̂)")
         debugStrings.append("    α: \(α.rad2deg)")
         debugStrings.append(" CL_m: \(CL_mainsail)")
         debugStrings.append(" CD_m: \(CD_mainsail)")
-//        debugStrings.append("  L_m: \(L_mainsailŵ)")
-//        debugStrings.append("  D_m: \(D_mainsailŵ)")
-//        debugStrings.append(" tack: \(V_AB̂.θ > CGFloat.pi ? "port" : "starboard")")
-//        debugStrings.append("  D_h: \(D_hullŵ)")
-//        debugStrings.append("   FR: \(FR)")
-//        debugStrings.append(" FLAT: \(FLAT)")
-        debugStrings.append("    F: \(F_mainsail)")
-//        debugStrings.append(" Fh_h: \(Fh_hull)")
-//        debugStrings.append(" τ_bb: \(τ_bb)")
-//        debugStrings.append("    b: \(b)")
+        debugStrings.append("    F: \(F_msŵ)")
         debugStrings.append("θ_bbŵ: \(x_Bŵ.θx.rad2deg)")
         
         var finalString = ""

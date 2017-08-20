@@ -199,7 +199,13 @@ class GameScene: SKScene {
         if timeSinceLastScene > 0.100 { timeSinceLastScene = 0.0166 }
         lastSceneUpdateTime = currentTime
         
-        boat.moveBoat(afterTime: timeSinceLastScene, wind: v_Tŵ, tillerPosition: tillerPosition, mainSheetPosition: mainSheetPosition)
+        boat.v_Tŵ = self.v_Tŵ
+        boat.tillerPosition = self.tillerPosition
+        boat.mainsheetPosition = self.mainSheetPosition
+        
+        boat.applyBoatEffect(effect: BoatEffect.zero, duration: timeSinceLastScene)
+        
+        //boat.moveBoat(afterTime: timeSinceLastScene, wind: v_Tŵ, tillerPosition: tillerPosition, mainSheetPosition: mainSheetPosition)
         print(boat.statusString())
         
         //sceneShift -= boatMovement*GameViewController.pixelsPerMeter
@@ -218,7 +224,7 @@ class GameScene: SKScene {
             self.boat.zRotation = 0
         }
         
-        self.sternNode?.zRotation = -self.boat.x_Bŵ.θx
+        self.sternNode?.zRotation = -self.boat.θ_Bŵ.x
         
         let nf: NumberFormatter = {
             let temporaryFormatter = NumberFormatter()
@@ -232,7 +238,7 @@ class GameScene: SKScene {
         self.speedLabel?.text = "\(nf.string(from: NSNumber.init(value: Double(self.boat.v_Bŵ.mag)*1.943))!) kts"
         self.leewardLabel?.text = "\(nf.string(from: NSNumber.init(value: Double((self.boat.v_Bŵ⋅v_Tŵ)/v_Tŵ.mag)*1.943))!) kts"
         self.frLabel?.text = "FR: \(nf.string(from: NSNumber.init(value: Double(0)))!)"
-        self.frlLabel?.text = "F.θ: \(nf.string(from: NSNumber.init(value: Double(self.boat.F_mainsail.θz.rad2deg)))!)"
+        self.frlLabel?.text = "F.θ: \(nf.string(from: NSNumber.init(value: Double(self.boat.F_msŵ.θz.rad2deg)))!)"
         self.aaLabel?.text = "α: \(nf.string(from: NSNumber.init(value: Double(self.boat.α.rad2deg)))!)"
         self.heelLabel?.text = "θ_bbŵ: \(nf.string(from: NSNumber.init(value: Double(self.boat.x_Bŵ.θx.rad2deg)))!)"
         self.fhLabel?.text = "\(nf.string(from: NSNumber.init(value: Double(0)))!)"

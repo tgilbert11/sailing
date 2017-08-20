@@ -61,8 +61,6 @@ class Boat: SKSpriteNode {
     var θ_Drŵ: CGFloat { return v_raŵ.θz }
     var F_rudder: CGVector3 { return CGVector3(x: L_rmag*cos(θ_Lrŵ) + D_rmag*cos(θ_Drŵ), y: L_rmag*sin(θ_Lrŵ) + D_rmag*sin(θ_Drŵ), z: 0) }
     
-    //var B̂: CGVector { get { return CGVector.init(normalWithAngle: θ_Bŵ.z) } } // []
-    
     
     init(blueprint: BoatBlueprint) {
         
@@ -94,6 +92,7 @@ class Boat: SKSpriteNode {
     }
     
     func applyBoatEffect(effect: BoatEffect, duration: TimeInterval) {
+        
         // add effects of boat (centerboard, hull, rudder)
         let D_LAT_mag = 0.5 * ρ_water * S_boat * CD_hull_LAT * pow(v_Bŵ.mag*sin(v_Bŵ.θz-θ_Bŵ.z),2)
         let θ_D_LATŵ = θ_Bŵ.z + (sin(v_Bŵ.θz-θ_Bŵ.z)>0 ? -1 : 1)*CGFloat.pi/2
@@ -103,12 +102,13 @@ class Boat: SKSpriteNode {
         
         let fullEffect = effect + BoatEffect(force: CGVector3(x: D_LAT_mag*cos(θ_D_LATŵ) + D_R_mag*cos(θ_D_Rŵ), y: D_LAT_mag*sin(θ_D_LATŵ) + D_R_mag*sin(θ_D_Rŵ), z: 0), torque: CGVector3(x: 0, y: 0, z: -F_rudder.mag*sin(F_rudder.θz-θ_Bŵ.z)))
         
+        
+        
         // update the boat's velocity, angular torque, etc
         print("  F_r: \(F_rudder)")
         print("v_raŵ: \(v_raŵ)")
         print("v_raŵ.θz: \(v_raŵ.θz)")
         print(" θ_rŵ: \(θ_rŵ)")
-        
         print("  α_r: \(α_r)")
         print(" C_Lr: \(C_Lr)")
         print("L_mag: \(L_rmag)")
@@ -120,12 +120,10 @@ class Boat: SKSpriteNode {
         x_Bŵ += v_Bŵ*CGFloat(duration)
         v_Bŵ += fullEffect.force/M_boat*CGFloat(duration)
         
-        //CGVector3(x: CGFloat(effect.force.x)/M_boat*CGFloat(duration), y: CGFloat(-effect.force.y)/M_boat*CGFloat(duration), z: 0)
-        
         θ_Bŵ += ω_Bŵ*CGFloat(duration)
         ω_Bŵ += fullEffect.torque/I_boat*CGFloat(duration)
         
-        self.tiller?.zRotation = self.tillerPosition*CGFloat.pi/3
+        self.tiller?.zRotation = θ_rB̂
     }
         
 }
@@ -147,6 +145,7 @@ struct BoatBlueprint {
 struct BoatEffect {
     var force: CGVector3
     var torque: CGVector3
+    static let zero: BoatEffect = BoatEffect(force: CGVector3.zero, torque: CGVector3.zero)
     static func + (left: BoatEffect, right: BoatEffect) -> BoatEffect {
         return BoatEffect(force: left.force+right.force, torque: left.torque+right.torque)
     }
@@ -301,4 +300,8 @@ struct CGVector3 {
         return CGVector3(x: self.x*cos(θ) - self.y*sin(θ), y: self.x*sin(θ) + self.y*cos(θ), z: self.z)
     }
 
+    static func torqueFromForce(force: CGVector3, appliedAt location: CGVector3) -> CGVector3 {
+        return CGVector3(x: location.y*force.z - location.z*force.y, y: location.z*force.x - location.x*force.z, z: location.x*force.y - location.y*force.x)
+    }
+    
 }

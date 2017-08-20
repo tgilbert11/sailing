@@ -40,7 +40,7 @@ class Catboat: Boat {
     var Lŵ_θz: CGFloat { return v_Aŵ.θz + (α < 0 ? 1 : -1)*CGFloat.pi/2 } // radians
     var L_mag: CGFloat { return 0.5 * ρ_air * A_mainsail * cos(θ_Bŵ.x) * CL_mainsail(abs(α)) * v_Aŵ.mag2 }
     var D_mag: CGFloat { return 0.5 * ρ_air * A_mainsail * CD_mainsail(abs(α)) * v_Aŵ.mag2 }
-    var F_mainsail: CGVector3 { return CGVector3(x: L_mag*cos(Lŵ_θz) + D_mag*cos(v_Aŵ.θz), y: L_mag*sin(Lŵ_θz) + D_mag*sin(v_Aŵ.θz), z: 0) }
+    var F_msŵ: CGVector3 { return CGVector3(x: L_mag*cos(Lŵ_θz) + D_mag*cos(v_Aŵ.θz), y: L_mag*sin(Lŵ_θz) + D_mag*sin(v_Aŵ.θz), z: 0) }
  
     // MISSING!!!
     var τ_bb: CGFloat { return 0 } // Nm
@@ -83,7 +83,12 @@ class Catboat: Boat {
         print("D_mag: \(D_mag)")
         print("D_ang: \(v_Aŵ.θz)")
         print("abs(v_AB.tz - pi): \(abs(v_AB̂.θz - CGFloat.pi))")
-        super.applyBoatEffect(effect: effect + BoatEffect(force: F_mainsail, torque: CGVector3.zero), duration: duration)
+        
+        let torque_x = self.bowToCG-self.bowToMast-self.boomLength/3*cos(θ_sB̂)
+        let torque_y = self.boomLength/3*sin(θ_sB̂)
+        let torque = CGVector3.torqueFromForce(force: F_msŵ, appliedAt: CGVector3(x: torque_x*cos(θ_Bŵ.z), y: torque_y*sin(θ_Bŵ.z), z: 0))
+        print("    torque)")
+        super.applyBoatEffect(effect: effect + BoatEffect(force: F_msŵ, torque: torque), duration: duration)
     }
     
     required init?(coder aDecoder: NSCoder) {
