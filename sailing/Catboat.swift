@@ -33,14 +33,30 @@ class Catboat: Boat {
     // computations
     var v_Tŵ = CGVector3.zero
     var v_Aŵ: CGVector3 { return v_Tŵ - v_Bŵ } // m/s
-    var v_AB̂: CGVector3 { return v_Aŵ.rotatedInZBy(θ: -θ_Bŵ.z) } // m/s
+    var v_AB̂: CGVector3 { return v_Aŵ.rotatedBy(transform: CGVector3(x: 0, y: 0, z: -θ_BŵB̂.z)) } // m/s
+//    var v_AB̂: CGVector3 { return v_Aŵ.rotatedInZBy(θ: -θ_BŵB̂.z) } // m/s
     var sailout: CGFloat { return mainsheetClosestHaul + (mainsailMaxAngle-mainsheetClosestHaul)*mainsheetPosition } // radians
     var α: CGFloat { return abs(v_AB̂.θz - CGFloat.pi) > sailout ? ( CGFloat.pi - v_AB̂.θz + (v_AB̂.θz > CGFloat.pi ? 1 : -1) * sailout) : 0 } // radians
     var θ_sB̂: CGFloat { return v_AB̂.θz + α }
     var Lŵ_θz: CGFloat { return v_Aŵ.θz + (α < 0 ? 1 : -1)*CGFloat.pi/2 } // radians
-    var L_mag: CGFloat { return 0.5 * ρ_air * A_mainsail * cos(θ_Bŵ.x) * CL_mainsail(abs(α)) * v_Aŵ.mag2 }
+    var L_mag: CGFloat { return 0.5 * ρ_air * A_mainsail * cos(θ_BŵB̂.x) * CL_mainsail(abs(α)) * v_Aŵ.mag2 }
     var D_mag: CGFloat { return 0.5 * ρ_air * A_mainsail * CD_mainsail(abs(α)) * v_Aŵ.mag2 }
     var F_msŵ: CGVector3 { return CGVector3(x: L_mag*cos(Lŵ_θz) + D_mag*cos(v_Aŵ.θz), y: L_mag*sin(Lŵ_θz) + D_mag*sin(v_Aŵ.θz), z: 0) }
+    
+    // rudder
+    var l_r: CGFloat { return loa-bowToCG+(rudderExtension+0.1)/2 }
+    var v_raŵ: CGVector3 { return -v_Bŵ + CGVector3(x: -(ω_BŵB̂.z * l_r * sin(θ_BŵB̂.z)), y: ω_BŵB̂.z * l_r * cos(θ_BŵB̂.z), z: 0) }
+    var θ_rB̂: CGFloat { return -tillerPosition * tillerRate }
+    var θ_rŵ: CGFloat { return θ_BŵB̂.z + θ_rB̂ }
+    var α_r: CGFloat { return (θ_rŵ - v_raŵ.θz + CGFloat.pi).normalizedAngle() }
+    var C_Lr: CGFloat { return 1.6*sin(2*α_r) }
+    var C_Dr: CGFloat { return 1.2*abs(sin(α_r)) }
+    var L_rmag: CGFloat { return 0.5 * ρ_water * rudderDepth * (rudderExtension-0.1) * C_Lr * v_raŵ.mag2 }
+    var D_rmag: CGFloat { return 0.5 * ρ_water * rudderDepth * (rudderExtension-0.1) * C_Dr * v_raŵ.mag2 }
+    var θ_Lrŵ: CGFloat { return v_raŵ.θz - CGFloat.pi/2 }
+    var θ_Drŵ: CGFloat { return v_raŵ.θz }
+    var F_rŵ: CGVector3 { return CGVector3(x: L_rmag*cos(θ_Lrŵ) + D_rmag*cos(θ_Drŵ), y: L_rmag*sin(θ_Lrŵ) + D_rmag*sin(θ_Drŵ), z: 0) }
+
  
     // MISSING!!!
     var τ_bb: CGFloat { return 0 } // Nm
@@ -77,6 +93,16 @@ class Catboat: Boat {
         
     }
     
+    override func advanceSimulationBy(duration: TimeInterval) {
+        
+        applyForce(force_ŵ: F_msŵ, atPoint_b̂: CGVector3(x: self.bowToCG - self.bowToMast - self.boomLength/3*cos(θ_sB̂), y: self.boomLength/3*sin(θ_sB̂), z: 0))
+        
+        // need to figure out rudder, shoudn't be hard
+        //applyForce(force_ŵ: F_rŵ, atPoint_b̂: CGVector3(x: <#T##CGFloat#>, y: <#T##CGFloat#>, z: <#T##CGFloat#>))
+        
+        super.advanceSimulationBy(duration: duration)
+    }
+    
     override func applyBoatEffect(effect: BoatEffect, duration: TimeInterval) {
         print("L_mag: \(L_mag)")
         print("L_ang: \(Lŵ_θz)")
@@ -86,8 +112,10 @@ class Catboat: Boat {
         
         let torque_x = self.bowToCG-self.bowToMast-self.boomLength/3*cos(θ_sB̂)
         let torque_y = self.boomLength/3*sin(θ_sB̂)
-        let torque = CGVector3.torqueFromForce(force: F_msŵ, appliedAt: CGVector3(x: torque_x*cos(θ_Bŵ.z), y: torque_y*sin(θ_Bŵ.z), z: 0))
+        let torque = CGVector3.torqueFromForce(force: F_msŵ, appliedAt: CGVector3(x: torque_x*cos(θ_BŵB̂.z), y: torque_y*sin(θ_BŵB̂.z), z: 0))
         print("    torque)")
+        
+        
         super.applyBoatEffect(effect: effect + BoatEffect(force: F_msŵ, torque: torque), duration: duration)
     }
     

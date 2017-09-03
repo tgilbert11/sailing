@@ -70,17 +70,17 @@ class Catalina_14p2: Sloop {
      - Returns:
      change in boat position this update [m]
      */
-    public func moveBoat(afterTime elapsedTime: TimeInterval, wind: CGVector3, tillerPosition tiller: CGFloat, mainSheetPosition mainsheet: CGFloat) {
-        v_Tŵ = wind
-        tillerPosition = tiller
-        mainsheetPosition = mainsheet
-        
-        self.applyBoatEffect(effect: BoatEffect(force: CGVector3.zero, torque: CGVector3.zero), duration: elapsedTime)
-        
-        self.mainsail?.zRotation = self.θ_sB̂ + CGFloat.pi // NEED TO MAKE ABSOLUTELY CORRECT
-        self.mastTellTail?.zRotation = v_AB̂.θz + CGFloat.pi // NEED TO MAKE ABSOLUTELY CORRECT
-        self.tiller?.zRotation = -self.tillerPosition*CGFloat.pi/3
-    }
+//    public func moveSloop(afterTime elapsedTime: TimeInterval, wind: CGVector3, tillerPosition tiller: CGFloat, mainSheetPosition mainsheet: CGFloat, jibPosition jib: CGFloat) {
+//        v_Tŵ = wind
+//        tillerPosition = tiller
+//        mainsheetPosition = mainsheet
+//
+//        self.applyBoatEffect(effect: BoatEffect(force: CGVector3.zero, torque: CGVector3.zero), duration: elapsedTime)
+//
+//        self.mainsail?.zRotation = self.θ_sB̂ + CGFloat.pi // NEED TO MAKE ABSOLUTELY CORRECT
+//        self.mastTellTail?.zRotation = v_AB̂.θz + CGFloat.pi // NEED TO MAKE ABSOLUTELY CORRECT
+//        self.tiller?.zRotation = -self.tillerPosition*CGFloat.pi/3
+//    }
     
     
     // Printing

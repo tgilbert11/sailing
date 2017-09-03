@@ -217,14 +217,14 @@ class GameScene: SKScene {
     func updateGraphics() {
         if rotateBoatNotView {
             self.windLabel?.zRotation = v_Tŵ.θz
-            self.boat.zRotation = self.boat.θ_Bŵ.z 
+            self.boat.zRotation = self.boat.θ_BŵB̂.z
         }
         else {
             self.windLabel?.zRotation = -self.boat.x_Bŵ.θz+v_Tŵ.θz+CGFloat.pi/2
             self.boat.zRotation = 0
         }
         
-        self.sternNode?.zRotation = -self.boat.θ_Bŵ.x
+        self.sternNode?.zRotation = -self.boat.θ_BŵB̂.x
         
         let nf: NumberFormatter = {
             let temporaryFormatter = NumberFormatter()

@@ -37,8 +37,8 @@ class Boat: SKSpriteNode {
     // variables
     var x_Bŵ: CGVector3 = CGVector3.zero { didSet { self.position = CGPoint(x: self.x_Bŵ.x*GameViewController.pixelsPerMeter, y: self.x_Bŵ.y*GameViewController.pixelsPerMeter) } }
     var v_Bŵ: CGVector3 = CGVector3.zero // m/s
-    var θ_Bŵ: CGVector3 = CGVector3.zero
-    var ω_Bŵ: CGVector3 = CGVector3.zero
+    var θ_BŵB̂: CGVector3 = CGVector3.zero
+    var ω_BŵB̂: CGVector3 = CGVector3.zero
     var tillerPosition: CGFloat = 0 // [], [-1,1]
     
     // UI nodes
@@ -46,20 +46,10 @@ class Boat: SKSpriteNode {
     
     // Simulation
     var lastSceneUpdateTime: TimeInterval? = 0
+    var forces: [CGVector3] = []
+    var torques: [CGVector3] = []
     
     // Computations
-    var l_r: CGFloat { return loa-bowToCG+(rudderExtension+0.1)/2 }
-    var v_raŵ: CGVector3 { return -v_Bŵ + CGVector3(x: -(ω_Bŵ.z * l_r * sin(θ_Bŵ.z)), y: ω_Bŵ.z * l_r * cos(θ_Bŵ.z), z: 0) }
-    var θ_rB̂: CGFloat { return -tillerPosition * tillerRate }
-    var θ_rŵ: CGFloat { return θ_Bŵ.z + θ_rB̂ }
-    var α_r: CGFloat { return (θ_rŵ - v_raŵ.θz + CGFloat.pi).normalizedAngle() }
-    var C_Lr: CGFloat { return 1.6*sin(2*α_r) }
-    var C_Dr: CGFloat { return 1.2*abs(sin(α_r)) }
-    var L_rmag: CGFloat { return 0.5 * ρ_water * rudderDepth * (rudderExtension-0.1) * C_Lr * v_raŵ.mag2 }
-    var D_rmag: CGFloat { return 0.5 * ρ_water * rudderDepth * (rudderExtension-0.1) * C_Dr * v_raŵ.mag2 }
-    var θ_Lrŵ: CGFloat { return v_raŵ.θz - CGFloat.pi/2 }
-    var θ_Drŵ: CGFloat { return v_raŵ.θz }
-    var F_rudder: CGVector3 { return CGVector3(x: L_rmag*cos(θ_Lrŵ) + D_rmag*cos(θ_Drŵ), y: L_rmag*sin(θ_Lrŵ) + D_rmag*sin(θ_Drŵ), z: 0) }
     
     
     init(blueprint: BoatBlueprint) {
@@ -91,16 +81,46 @@ class Boat: SKSpriteNode {
         fatalError("init(coder:) has not been implemented")
     }
     
+    func advanceSimulationBy(duration: TimeInterval) {
+        let D_LAT_mag = 0.5 * ρ_water * S_boat * CD_hull_LAT * pow(v_Bŵ.mag*sin(v_Bŵ.θz-θ_BŵB̂.z),2)
+        let θ_D_LATŵ = θ_BŵB̂.z + (sin(v_Bŵ.θz-θ_BŵB̂.z)>0 ? -1 : 1)*CGFloat.pi/2
+        applyForce(force_ŵ: CGVector3(x: D_LAT_mag*cos(θ_D_LATŵ), y: D_LAT_mag*sin(θ_D_LATŵ), z: 0) , atPoint_b̂: CGVector3.zero)
+
+        let D_R_mag = 0.5 * ρ_water * S_boat * CD_hull_R * pow(v_Bŵ.mag*cos(v_Bŵ.θz-θ_BŵB̂.z),2)
+        let θ_D_Rŵ = θ_BŵB̂.z + (cos(v_Bŵ.θz-θ_BŵB̂.z) > 0 ? 1 : 0) * CGFloat.pi
+        applyForce(force_ŵ: CGVector3(x: D_R_mag*cos(θ_D_Rŵ), y: D_R_mag*sin(θ_D_Rŵ), z: 0) , atPoint_b̂: CGVector3.zero)
+        
+        
+        let F = forces.reduce(CGVector3.zero) {$0 + $1}
+        let τ = torques.reduce(CGVector3.zero) {$0 + $1}
+        
+        x_Bŵ += v_Bŵ*CGFloat(duration)
+        v_Bŵ += F/M_boat*CGFloat(duration)
+        
+        θ_BŵB̂ += ω_BŵB̂*CGFloat(duration)
+        ω_BŵB̂ += τ/I_boat*CGFloat(duration)
+        
+        forces.removeAll()
+        torques.removeAll()
+        
+        self.tiller?.zRotation = θ_rB̂
+    }
+    
+    func applyForce(force_ŵ force: CGVector3, atPoint_b̂ point: CGVector3) {
+        self.forces.append(force)
+        self.torques.append(force.rotatedBy(transform: -θ_BŵB̂).torqueFromApplyingAtLocation(r: point))
+    }
+    
     func applyBoatEffect(effect: BoatEffect, duration: TimeInterval) {
         
         // add effects of boat (centerboard, hull, rudder)
-        let D_LAT_mag = 0.5 * ρ_water * S_boat * CD_hull_LAT * pow(v_Bŵ.mag*sin(v_Bŵ.θz-θ_Bŵ.z),2)
-        let θ_D_LATŵ = θ_Bŵ.z + (sin(v_Bŵ.θz-θ_Bŵ.z)>0 ? -1 : 1)*CGFloat.pi/2
+        let D_LAT_mag = 0.5 * ρ_water * S_boat * CD_hull_LAT * pow(v_Bŵ.mag*sin(v_Bŵ.θz-θ_BŵB̂.z),2)
+        let θ_D_LATŵ = θ_BŵB̂.z + (sin(v_Bŵ.θz-θ_BŵB̂.z)>0 ? -1 : 1)*CGFloat.pi/2
         
-        let D_R_mag = 0.5 * ρ_water * S_boat * CD_hull_R * pow(v_Bŵ.mag*cos(v_Bŵ.θz-θ_Bŵ.z),2)
-        let θ_D_Rŵ = θ_Bŵ.z + (cos(v_Bŵ.θz-θ_Bŵ.z) > 0 ? 1 : 0) * CGFloat.pi
+        let D_R_mag = 0.5 * ρ_water * S_boat * CD_hull_R * pow(v_Bŵ.mag*cos(v_Bŵ.θz-θ_BŵB̂.z),2)
+        let θ_D_Rŵ = θ_BŵB̂.z + (cos(v_Bŵ.θz-θ_BŵB̂.z) > 0 ? 1 : 0) * CGFloat.pi
         
-        let fullEffect = effect + BoatEffect(force: CGVector3(x: D_LAT_mag*cos(θ_D_LATŵ) + D_R_mag*cos(θ_D_Rŵ), y: D_LAT_mag*sin(θ_D_LATŵ) + D_R_mag*sin(θ_D_Rŵ), z: 0), torque: CGVector3(x: 0, y: 0, z: -F_rudder.mag*sin(F_rudder.θz-θ_Bŵ.z)))
+        let fullEffect = effect + BoatEffect(force: CGVector3(x: D_LAT_mag*cos(θ_D_LATŵ) + D_R_mag*cos(θ_D_Rŵ), y: D_LAT_mag*sin(θ_D_LATŵ) + D_R_mag*sin(θ_D_Rŵ), z: 0), torque: CGVector3(x: 0, y: 0, z: -F_rudder.mag*sin(F_rudder.θz-θ_BŵB̂.z)))
         
         
         
@@ -114,14 +134,14 @@ class Boat: SKSpriteNode {
         print("L_mag: \(L_rmag)")
         print("θ_Lrŵ: \(θ_Lrŵ)")
         print("    τ: \(fullEffect.torque)")
-        print(" θ_Bŵ: \(θ_Bŵ)")
-        print(" ω_Bŵ: \(ω_Bŵ)")
+        print(" θ_Bŵ: \(θ_BŵB̂)")
+        print(" ω_Bŵ: \(ω_BŵB̂)")
         
         x_Bŵ += v_Bŵ*CGFloat(duration)
         v_Bŵ += fullEffect.force/M_boat*CGFloat(duration)
         
-        θ_Bŵ += ω_Bŵ*CGFloat(duration)
-        ω_Bŵ += fullEffect.torque/I_boat*CGFloat(duration)
+        θ_BŵB̂ += ω_BŵB̂*CGFloat(duration)
+        ω_BŵB̂ += fullEffect.torque/I_boat*CGFloat(duration)
         
         self.tiller?.zRotation = θ_rB̂
     }
@@ -296,12 +316,15 @@ struct CGVector3 {
         return left.x*right.x + left.y*right.y + left.z*right.z
     }
     
-    func rotatedInZBy(θ: CGFloat) -> CGVector3 {
-        return CGVector3(x: self.x*cos(θ) - self.y*sin(θ), y: self.x*sin(θ) + self.y*cos(θ), z: self.z)
+    func rotatedBy(transform θ_t: CGVector3) -> CGVector3 {
+        let rotatedInZ = CGVector3(x: self.x*cos(θ_t.z) - self.y*sin(θ_t.z), y: self.x*sin(θ_t.z) + self.y*cos(θ_t.z), z: self.z)
+        let rotatedInZY = CGVector3(x: rotatedInZ.x*cos(θ_t.y) + rotatedInZ.z*sin(θ_t.y), y: rotatedInZ.y, z: -rotatedInZ.x*sin(θ_t.y) + rotatedInZ.z*cos(θ_t.y))
+        let rotatedInZYX = CGVector3(x: rotatedInZY.x, y: rotatedInZY.y*cos(θ_t.x) - rotatedInZY.z*sin(θ_t.x), z: rotatedInZY.y*sin(θ_t.x) + rotatedInZY.z*cos(θ_t.x))
+        return rotatedInZYX
     }
-
-    static func torqueFromForce(force: CGVector3, appliedAt location: CGVector3) -> CGVector3 {
-        return CGVector3(x: location.y*force.z - location.z*force.y, y: location.z*force.x - location.x*force.z, z: location.x*force.y - location.y*force.x)
+    
+    func torqueFromApplyingAtLocation(r: CGVector3) -> CGVector3 {
+        return CGVector3(x: r.y*self.z - r.z*self.y, y: r.z*self.x - r.x*self.z, z: r.x*self.y - r.y*self.x)
     }
     
 }
